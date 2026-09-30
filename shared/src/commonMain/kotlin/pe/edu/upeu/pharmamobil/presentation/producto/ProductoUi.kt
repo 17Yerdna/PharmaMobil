@@ -9,7 +9,10 @@ data class ProductoUi(
     val nombre: String,
     val precio: String,
     val stock: String,
-    val requiereReposicion: Boolean
+    val requiereReposicion: Boolean,
+    val descripcion: String = "",
+    val imagenUrl: String = "",
+    val categoria: String = ""
 )
 
 fun Producto.aUi(): ProductoUi = ProductoUi(
@@ -17,7 +20,10 @@ fun Producto.aUi(): ProductoUi = ProductoUi(
     nombre = nombre,
     precio = precio.enSoles(),
     stock = "$stock u.",
-    requiereReposicion = requiereReposicion
+    requiereReposicion = requiereReposicion,
+    descripcion = descripcion,
+    imagenUrl = imagen,
+    categoria = categoria
 )
 
 /** Kotlin comun no trae String.format, asi que armamos los dos decimales a mano. */
