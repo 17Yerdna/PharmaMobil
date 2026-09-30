@@ -28,4 +28,23 @@ Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 
 ---
 
+## Sesión 07 — Cliente Ktor y Consumo GET
+
+### Configuración del API REST
+- **URL Base:** `https://api.escuelajs.co/api/v1/`
+- **Endpoint consumido:** `GET /products?limit=10`
+- **Cabeceras:** `Content-Type: application/json`
+
+### Estructura de DTOs (`ProductoDto`)
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | `Long` | Identificador único del producto |
+| `title` | `String` | Nombre o título del producto (mapeado a `nombre` en dominio) |
+| `price` | `Double` | Precio unitario del producto (mapeado a `precio` en dominio) |
+| `description` | `String` | Descripción detallada |
+| `images` | `List<String>` | Lista de URLs de imágenes del producto |
+| `category` | `CategoriaDto` | Categoría asociada (`id`, `name`) |
+
+---
+
 Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
