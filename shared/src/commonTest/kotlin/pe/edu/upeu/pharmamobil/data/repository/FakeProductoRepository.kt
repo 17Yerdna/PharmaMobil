@@ -26,10 +26,11 @@ class FakeProductoRepository(
         return guardado
     }
 
-    override suspend fun listar(): List<Producto> {
+    override suspend fun listar(offset: Int, limite: Int): List<Producto> {
 
         fallaAlListar?.let { throw it }
 
-        return productos.toList()
+        return productos.drop(offset).take(limite)
     }
 }
+

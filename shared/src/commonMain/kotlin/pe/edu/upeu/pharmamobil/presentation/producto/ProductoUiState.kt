@@ -4,7 +4,10 @@ data class ProductoUiState(
     val fase: Fase = Fase.Cargando,
     val formulario: FormularioProducto = FormularioProducto(),
     val registrando: Boolean = false,
-    val mensajeExito: String? = null
+    val mensajeExito: String? = null,
+    val paginaActual: Int = 1,
+    val limitePorPagina: Int = 10,
+    val hayMasProductos: Boolean = true
 ) {
 
     /** Fases excluyentes del inventario: solo una puede estar activa. */

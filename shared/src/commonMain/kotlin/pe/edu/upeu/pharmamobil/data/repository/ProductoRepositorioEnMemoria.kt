@@ -32,10 +32,10 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         }
     }
 
-    override suspend fun listar(): List<Producto> {
+    override suspend fun listar(offset: Int, limite: Int): List<Producto> {
         delay(RETARDO_LISTADO_MS)
         return candado.withLock {
-            productos.toList()
+            productos.drop(offset).take(limite)
         }
     }
 

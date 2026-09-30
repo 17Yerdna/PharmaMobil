@@ -25,15 +25,34 @@ class ProductoViewModel(
     }
 
     fun cargarProductos() {
+        cargarPagina(_uiState.value.paginaActual)
+    }
 
+    fun paginaSiguiente() {
+        val siguiente = _uiState.value.paginaActual + 1
+        cargarPagina(siguiente)
+    }
+
+    fun paginaAnterior() {
+        val actual = _uiState.value.paginaActual
+        if (actual > 1) {
+            cargarPagina(actual - 1)
+        }
+    }
+
+    fun cargarPagina(pagina: Int) {
         viewModelScope.launch {
+            val limite = _uiState.value.limitePorPagina
+            val offset = (pagina - 1) * limite
 
             _uiState.update {
-                it.copy(fase = ProductoUiState.Fase.Cargando)
+                it.copy(fase = ProductoUiState.Fase.Cargando, paginaActual = pagina)
             }
 
-            val fase = listarProductos().fold(
+            val fase = listarProductos(offset = offset, limite = limite).fold(
                 onSuccess = { productos ->
+                    val mas = productos.size >= limite
+                    _uiState.update { it.copy(hayMasProductos = mas) }
                     if (productos.isEmpty()) {
                         ProductoUiState.Fase.SinProductos
                     } else {
@@ -52,6 +71,7 @@ class ProductoViewModel(
             }
         }
     }
+
 
     fun onNombreChange(nombre: String) {
         _uiState.update {

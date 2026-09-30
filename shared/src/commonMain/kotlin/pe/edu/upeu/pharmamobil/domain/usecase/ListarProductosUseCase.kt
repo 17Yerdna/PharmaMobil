@@ -7,7 +7,7 @@ class ListarProductosUseCase(
     private val productoRepository: ProductoRepository
 ) {
 
-    suspend operator fun invoke(): Result<List<Producto>> = resultadoDe {
-        productoRepository.listar()
+    suspend operator fun invoke(offset: Int = 0, limite: Int = 10): Result<List<Producto>> = resultadoDe {
+        productoRepository.listar(offset = offset, limite = limite)
     }
 }

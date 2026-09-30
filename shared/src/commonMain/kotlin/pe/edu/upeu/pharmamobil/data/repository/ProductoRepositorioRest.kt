@@ -12,8 +12,8 @@ class ProductoRepositorioRest(
     private val api: ProductoApi
 ) : ProductoRepository {
 
-    override suspend fun listar(): List<Producto> {
-        return api.obtenerProductos().map { it.toDomain() }
+    override suspend fun listar(offset: Int, limite: Int): List<Producto> {
+        return api.obtenerProductos(offset = offset, limite = limite).map { it.toDomain() }
     }
 
     override suspend fun registrar(producto: Producto): Producto {

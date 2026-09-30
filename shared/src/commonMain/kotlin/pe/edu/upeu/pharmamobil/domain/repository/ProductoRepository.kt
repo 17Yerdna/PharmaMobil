@@ -7,6 +7,6 @@ interface ProductoRepository {
     /** Incorpora el producto al inventario y devuelve el producto ya identificado. */
     suspend fun registrar(producto: Producto): Producto
 
-    /** Entrega el inventario completo en el orden en que fue registrado. */
-    suspend fun listar(): List<Producto>
+    /** Entrega el inventario en el orden en que fue registrado, con soporte de paginación. */
+    suspend fun listar(offset: Int = 0, limite: Int = 10): List<Producto>
 }

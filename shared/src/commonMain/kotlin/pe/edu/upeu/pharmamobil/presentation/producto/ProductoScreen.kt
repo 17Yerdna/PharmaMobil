@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Medication
@@ -128,8 +132,80 @@ fun ProductoScreen(
                     )
             }
         }
+
+        if (uiState.fase is ProductoUiState.Fase.ConProductos || uiState.paginaActual > 1) {
+            BarraPaginacion(
+                paginaActual = uiState.paginaActual,
+                hayMas = uiState.hayMasProductos,
+                cargando = uiState.fase is ProductoUiState.Fase.Cargando,
+                onAnterior = viewModel::paginaAnterior,
+                onSiguiente = viewModel::paginaSiguiente
+            )
+        }
     }
 }
+
+@Composable
+private fun BarraPaginacion(
+    paginaActual: Int,
+    hayMas: Boolean,
+    cargando: Boolean,
+    onAnterior: () -> Unit,
+    onSiguiente: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            FilledTonalButton(
+                onClick = onAnterior,
+                enabled = paginaActual > 1 && !cargando
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Anterior",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Anterior")
+            }
+
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                Text(
+                    text = "Pág. $paginaActual",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+
+            FilledTonalButton(
+                onClick = onSiguiente,
+                enabled = hayMas && !cargando
+            ) {
+                Text("Siguiente")
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Siguiente",
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
 
 
 @Composable
