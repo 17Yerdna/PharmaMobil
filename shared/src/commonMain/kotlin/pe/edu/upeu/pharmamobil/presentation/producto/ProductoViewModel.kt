@@ -11,7 +11,6 @@ import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 
-
 class ProductoViewModel(
     private val registrarProducto: RegistrarProductoUseCase,
     private val listarProductos: ListarProductosUseCase
@@ -26,6 +25,14 @@ class ProductoViewModel(
 
     fun cargarProductos() {
         cargarPagina(_uiState.value.paginaActual)
+    }
+
+    fun toggleFormulario() {
+        _uiState.update { it.copy(formularioVisible = !it.formularioVisible) }
+    }
+
+    fun setFiltro(filtro: FiltroInventario) {
+        _uiState.update { it.copy(filtroSeleccionado = filtro) }
     }
 
     fun paginaSiguiente() {
@@ -72,7 +79,6 @@ class ProductoViewModel(
         }
     }
 
-
     fun onNombreChange(nombre: String) {
         _uiState.update {
             it.copy(
@@ -101,11 +107,9 @@ class ProductoViewModel(
     }
 
     fun registrar() {
-
         if (_uiState.value.registrando) return
 
         viewModelScope.launch {
-
             _uiState.update {
                 it.copy(registrando = true, mensajeExito = null)
             }
@@ -121,6 +125,7 @@ class ProductoViewModel(
                     _uiState.update {
                         it.copy(
                             registrando = false,
+                            formularioVisible = false,
                             formulario = FormularioProducto(),
                             mensajeExito = "Producto \"${producto.nombre}\" registrado correctamente"
                         )
@@ -129,7 +134,6 @@ class ProductoViewModel(
                 },
                 onFailure = { fallo ->
                     when (fallo) {
-
                         is ProductoInvalidoException -> _uiState.update {
                             it.copy(
                                 registrando = false,
