@@ -3,75 +3,78 @@ package pe.edu.upeu.pharmamobil.domain.usecase
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
-
-data class ErroresDeProducto(
-    val nombre: String? = null,
-    val precio: String? = null,
-    val stock: String? = null
-) {
-
-    val hayErrores: Boolean
-        get() = nombre != null || precio != null || stock != null
-}
-
-class ProductoInvalidoException(
-    val errores: ErroresDeProducto
-) : IllegalArgumentException("Los datos del producto no cumplen las reglas del negocio")
-
-
+/**
+ * Caso de uso que concentra las reglas de negocio para el registro de productos farmacéuticos.
+ * Reemplaza y centraliza la lógica que previamente residía en la capa de presentación.
+ *
+ * Ofrece:
+ * 1. validar(nombre, precio, stock, activo): Validación pura sincrónica de reglas de negocio.
+ * 2. invoke(nombre, precio, stock, activo): Operación completa que valida y persiste a través del repositorio.
+ */
 class RegistrarProductoUseCase(
     private val productoRepository: ProductoRepository
 ) {
+    /**
+     * Valida de manera pura y sincrónica las reglas de negocio para el registro de un producto.
+     */
+    fun validar(
+        nombre: String,
+        precio: String,
+        stock: String,
+        activo: Boolean = true
+    ): Result<Producto> {
+        val nombreTrimmed = nombre.trim()
+        if (nombreTrimmed.isBlank()) {
+            return Result.failure(IllegalArgumentException("El nombre es obligatorio."))
+        }
 
+        val precioDouble = precio.toDoubleOrNull()
+            ?: return Result.failure(IllegalArgumentException("Ingrese un precio numérico."))
+
+        if (precioDouble <= 0.0) {
+            return Result.failure(IllegalArgumentException("El precio debe ser mayor que cero."))
+        }
+
+        val stockInt = stock.toIntOrNull()
+            ?: return Result.failure(IllegalArgumentException("Ingrese un stock entero."))
+
+        if (stockInt < 0) {
+            return Result.failure(IllegalArgumentException("El stock no puede ser negativo."))
+        }
+
+        return try {
+            val productoValido = Producto(
+                id = 0L,
+                nombre = nombreTrimmed,
+                precio = precioDouble,
+                stock = stockInt,
+                activo = activo
+            )
+            Result.success(productoValido)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Valida y persiste el producto invocando al repositorio de forma suspendida.
+     */
     suspend operator fun invoke(
         nombre: String,
         precio: String,
-        stock: String
+        stock: String,
+        activo: Boolean = true
     ): Result<Producto> {
-
-        val errores = ErroresDeProducto(
-            nombre = validarNombre(nombre),
-            precio = validarPrecio(precio),
-            stock = validarStock(stock)
-        )
-
-        if (errores.hayErrores) {
-            return Result.failure(ProductoInvalidoException(errores))
+        val validacion = validar(nombre, precio, stock, activo)
+        if (validacion.isFailure) {
+            return validacion
         }
-
-        return resultadoDe {
-            productoRepository.registrar(
-                Producto(
-                    id = 0L,
-                    nombre = nombre.trim(),
-                    precio = precio.toDouble(),
-                    stock = stock.toInt()
-                )
-            )
-        }
-    }
-
-    private fun validarNombre(nombre: String): String? {
-        return if (nombre.isBlank()) "El nombre es obligatorio" else null
-    }
-
-    private fun validarPrecio(precio: String): String? {
-        val precioValor = precio.toDoubleOrNull()
-        return when {
-            precio.isBlank() -> "El precio es obligatorio"
-            precioValor == null || !precioValor.isFinite() -> "El precio debe ser un número válido"
-            precioValor <= 0 -> "El precio debe ser mayor a 0"
-            else -> null
-        }
-    }
-
-    private fun validarStock(stock: String): String? {
-        val stockValor = stock.toIntOrNull()
-        return when {
-            stock.isBlank() -> "El stock es obligatorio"
-            stockValor == null -> "El stock debe ser un número entero"
-            stockValor < 0 -> "El stock no puede ser negativo"
-            else -> null
+        val productoParaGuardar = validacion.getOrThrow()
+        return try {
+            val productoGuardado = productoRepository.registrar(productoParaGuardar)
+            Result.success(productoGuardado)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

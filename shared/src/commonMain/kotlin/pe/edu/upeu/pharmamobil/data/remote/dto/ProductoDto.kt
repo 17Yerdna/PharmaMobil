@@ -3,9 +3,13 @@ package pe.edu.upeu.pharmamobil.data.remote.dto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * DTO que representa un producto tal como lo devuelve la API remota.
+ * No debe ser importado por la capa de dominio.
+ */
 @Serializable
 data class ProductoDto(
-    val id: Long,
+    val id: Int,
     val title: String,
     val price: Double,
     val description: String = "",
@@ -14,7 +18,4 @@ data class ProductoDto(
 )
 
 @Serializable
-data class CategoriaDto(
-    val id: Long,
-    val name: String
-)
+data class CategoriaDto(val id: Int, val name: String)

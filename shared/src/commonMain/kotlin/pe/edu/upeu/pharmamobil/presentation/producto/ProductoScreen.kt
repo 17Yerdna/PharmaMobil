@@ -1,54 +1,20 @@
 package pe.edu.upeu.pharmamobil.presentation.producto
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Inventory2
-import androidx.compose.material.icons.filled.Medication
-import androidx.compose.material.icons.filled.WarningAmber
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,546 +24,712 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
-import pe.edu.upeu.pharmamobil.presentation.components.MensajeExito
-import pe.edu.upeu.pharmamobil.presentation.components.SkeletonGrid
-import pe.edu.upeu.pharmamobil.presentation.components.ValidatedTextField
-import pe.edu.upeu.pharmamobil.presentation.components.pressFeedback
+import pe.edu.upeu.pharmamobil.domain.model.Producto
+import pe.edu.upeu.pharmamobil.presentation.theme.*
 
+/**
+ * Pantalla de Inventario de Productos rediseñada con estándar SaaS de alta fidelidad:
+ * - Buscador reactivo integrado.
+ * - Pestañas segmentadas con contadores en pastillas.
+ * - Tarjetas de productos con SKU, precio destacado y pastillas semánticas de stock.
+ * - Formulario colapsable con validaciones reactivas y estados de carga.
+ */
 @Composable
 fun ProductoScreen(
     viewModel: ProductoViewModel,
     modifier: Modifier = Modifier
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsState()
+
+    val tabs = listOf(
+        "Activos" to uiState.totalActivos,
+        "Inactivos" to uiState.totalInactivos,
+        "Bajo Stock" to uiState.totalBajoStock
+    )
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // Cabecera superior con botón de acción
-        CabeceraCatalogo(
-            formularioVisible = uiState.formularioVisible,
-            onToggleFormulario = viewModel::toggleFormulario
-        )
-
-        // Formulario expandible con animación fluida
-        AnimatedVisibility(
-            visible = uiState.formularioVisible,
-            enter = fadeIn(tween(250)) + expandVertically(tween(300)),
-            exit = fadeOut(tween(200)) + shrinkVertically(tween(250))
+        // ==========================================
+        // HEADER CON ACCIÓN PRINCIPAL
+        // ==========================================
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            FormularioProductoCard(
-                formulario = uiState.formulario,
-                registrando = uiState.registrando,
-                onNombreChange = viewModel::onNombreChange,
-                onPrecioChange = viewModel::onPrecioChange,
-                onStockChange = viewModel::onStockChange,
-                onRegistrar = viewModel::registrar,
-                onCancelar = viewModel::toggleFormulario
-            )
-        }
-
-        uiState.mensajeExito?.let {
-            MensajeExito(it)
-        }
-
-        // Pestañas de filtrado de inventario
-        PestañasFiltro(
-            filtroActual = uiState.filtroSeleccionado,
-            onSeleccionarFiltro = viewModel::setFiltro
-        )
-
-        // Área central con estados de carga, error y lista en cuadrícula
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            when (val fase = uiState.fase) {
-                ProductoUiState.Fase.Cargando -> {
-                    SkeletonGrid(
-                        modifier = Modifier.fillMaxSize(),
-                        itemsCount = 6
-                    )
-                }
-
-                ProductoUiState.Fase.SinProductos -> {
-                    EstadoVacio(
-                        icono = Icons.Default.Inventory2,
-                        titulo = "Sin medicamentos registrados",
-                        descripcion = "Utiliza el botón superior para dar de alta el primer medicamento en el catálogo.",
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
-                is ProductoUiState.Fase.ConProductos -> {
-                    val productosFiltrados = when (uiState.filtroSeleccionado) {
-                        FiltroInventario.TODOS -> fase.productos
-                        FiltroInventario.DISPONIBLES -> fase.productos.filter { !it.requiereReposicion && !it.estaAgotado }
-                        FiltroInventario.BAJO_STOCK -> fase.productos.filter { it.requiereReposicion }
-                        FiltroInventario.AGOTADOS -> fase.productos.filter { it.estaAgotado }
-                    }
-
-                    if (productosFiltrados.isEmpty()) {
-                        EstadoVacio(
-                            icono = Icons.Default.WarningAmber,
-                            titulo = "No hay productos en esta categoría",
-                            descripcion = "No se encontraron ítems para el filtro \"${uiState.filtroSeleccionado.titulo}\".",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    } else {
-                        AnimatedContent(
-                            targetState = productosFiltrados,
-                            transitionSpec = {
-                                fadeIn(tween(200)) togetherWith fadeOut(tween(150))
-                            },
-                            label = "GridProductosTransition"
-                        ) { lista ->
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                items(
-                                    items = lista,
-                                    key = { it.id }
-                                ) { producto ->
-                                    ProductoCard(producto)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                is ProductoUiState.Fase.Error -> {
-                    EstadoVacio(
-                        icono = Icons.Default.CloudOff,
-                        titulo = "Conexión interrumpida",
-                        descripcion = fase.mensaje,
-                        colorIcono = MaterialTheme.colorScheme.error,
-                        colorFondoIcono = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
-                        modifier = Modifier.align(Alignment.Center),
-                        accion = {
-                            FilledTonalButton(
-                                onClick = viewModel::cargarProductos,
-                                modifier = Modifier.pressFeedback()
-                            ) {
-                                Text("Reintentar conexión")
-                            }
-                        }
-                    )
-                }
-            }
-        }
-
-        // Barra inferior de paginación flotante
-        if (uiState.fase is ProductoUiState.Fase.ConProductos || uiState.paginaActual > 1) {
-            BarraPaginacion(
-                paginaActual = uiState.paginaActual,
-                hayMas = uiState.hayMasProductos,
-                cargando = uiState.fase is ProductoUiState.Fase.Cargando,
-                onAnterior = viewModel::paginaAnterior,
-                onSiguiente = viewModel::paginaSiguiente
-            )
-        }
-    }
-}
-
-@Composable
-private fun CabeceraCatalogo(
-    formularioVisible: Boolean,
-    onToggleFormulario: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column {
-            Text(
-                text = "Catálogo Farmacéutico",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "Inventario sincronizado con API REST",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Button(
-            onClick = onToggleFormulario,
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (formularioVisible) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.primary,
-                contentColor = if (formularioVisible) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onPrimary
-            ),
-            modifier = Modifier.pressFeedback()
-        ) {
-            Icon(
-                imageVector = if (formularioVisible) Icons.Default.Close else Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = if (formularioVisible) "Cerrar" else "Nuevo",
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@Composable
-private fun PestañasFiltro(
-    filtroActual: FiltroInventario,
-    onSeleccionarFiltro: (FiltroInventario) -> Unit
-) {
-    ScrollableTabRow(
-        selectedTabIndex = filtroActual.ordinal,
-        edgePadding = 0.dp,
-        containerColor = Color.Transparent,
-        divider = {},
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 2.dp)
-    ) {
-        FiltroInventario.entries.forEach { filtro ->
-            val seleccionado = filtro == filtroActual
-            Tab(
-                selected = seleccionado,
-                onClick = { onSeleccionarFiltro(filtro) },
-                modifier = Modifier
-                    .padding(end = 6.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(
-                        if (seleccionado) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceContainerHigh
-                    )
-            ) {
+            Column {
                 Text(
-                    text = filtro.titulo,
+                    text = "Inventario de Productos",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Catálogo sincronizado por REST",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Button(
+                onClick = { viewModel.toggleMostrarFormulario() },
+                shape = RoundedCornerShape(12.dp),
+                colors = if (uiState.mostrarFormulario) {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                },
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    imageVector = if (uiState.mostrarFormulario) AppIcons.Close else AppIcons.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (uiState.mostrarFormulario) "Cerrar" else "Nuevo",
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Medium,
-                    color = if (seleccionado) MaterialTheme.colorScheme.onPrimaryContainer
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun ProductoCard(
-    producto: ProductoUi
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .pressFeedback(scaleDown = 0.97f),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ==========================================
+        // BARRA DE BÚSQUEDA REACTIVA
+        // ==========================================
+        OutlinedTextField(
+            value = uiState.busqueda,
+            onValueChange = viewModel::onBusquedaChanged,
+            placeholder = {
+                Text(
+                    text = "Buscar por nombre (ej. Paracetamol)...",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = AppIcons.Search,
+                    contentDescription = "Buscar",
+                    tint = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            trailingIcon = {
+                if (uiState.busqueda.isNotBlank()) {
+                    IconButton(onClick = { viewModel.onBusquedaChanged("") }) {
+                        Icon(
+                            imageVector = AppIcons.Close,
+                            contentDescription = "Limpiar búsqueda",
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ==========================================
+        // TABS SEGMENTADAS CON BADGES NUMÉRICOS
+        // ==========================================
+        PrimaryTabRow(
+            selectedTabIndex = uiState.tabSeleccionada,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .clip(RoundedCornerShape(14.dp))
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(14.dp)
+                )
         ) {
-            // Contenedor de Imagen con overlay de categoría
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.1f)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                contentAlignment = Alignment.Center
-            ) {
-                if (producto.imagenUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = producto.imagenUrl,
-                        contentDescription = producto.nombre,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            tabs.forEachIndexed { index, (titulo, cantidad) ->
+                val isSelected = uiState.tabSeleccionada == index
+                Tab(
+                    selected = isSelected,
+                    onClick = { viewModel.seleccionarTab(index) },
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = titulo,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                }
+                            ) {
+                                Text(
+                                    text = "$cantidad",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) {
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // ==========================================
+        // FORMULARIO O LISTA DE INVENTARIO
+        // ==========================================
+        AnimatedVisibility(
+            visible = uiState.mostrarFormulario,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            FormularioProductoCard(
+                formulario = uiState.formulario,
+                onNombreChanged = viewModel::onNombreChanged,
+                onPrecioChanged = viewModel::onPrecioChanged,
+                onStockChanged = viewModel::onStockChanged,
+                onActivoChanged = viewModel::onActivoChanged,
+                onRegistrarClick = viewModel::registrarProducto
+            )
+        }
+
+        if (!uiState.mostrarFormulario) {
+            when (val fase = uiState.fase) {
+                is FaseInventario.Cargando -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Medication,
-                                contentDescription = null,
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 3.dp,
                                 modifier = Modifier.size(36.dp)
+                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Text(
+                                text = "Sincronizando inventario con Ktor REST...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
 
-                // Tag de categoría sutil sobre la esquina superior izquierda
-                if (producto.categoria.isNotBlank()) {
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+                is FaseInventario.SinProductos -> {
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = producto.categoria,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(24.dp)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                                modifier = Modifier.size(56.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = AppIcons.Info,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.outline,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = if (uiState.busqueda.isNotBlank()) "No se encontraron resultados" else "Sin productos en esta categoría",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (uiState.busqueda.isNotBlank()) {
+                                    "Intenta con otro término o limpia la barra de búsqueda."
+                                } else {
+                                    "Utiliza el botón superior '+ Nuevo' para registrar nuevos ítems en el catálogo."
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                }
+
+                is FaseInventario.ConProductos -> {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(fase.productos, key = { it.id }) { producto ->
+                            ProductoItemCard(producto = producto)
+                        }
+                    }
+                }
+
+                is FaseInventario.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
+                                    shape = RoundedCornerShape(18.dp)
+                                )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.errorContainer,
+                                    modifier = Modifier.size(48.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = AppIcons.Warning,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "Error de Conexión REST",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = fase.mensaje,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = { viewModel.cargarProductos() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = AppIcons.Refresh,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Reintentar Conexión", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
                     }
                 }
             }
-
-            // Detalles del producto
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(
-                    text = producto.nombre,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Text(
-                    text = producto.precio,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                // Badge de estado de stock semántico
-                BadgeStock(
-                    stockTexto = producto.stock,
-                    requiereReposicion = producto.requiereReposicion,
-                    estaAgotado = producto.estaAgotado
-                )
-            }
         }
     }
 }
 
-@Composable
-private fun BadgeStock(
-    stockTexto: String,
-    requiereReposicion: Boolean,
-    estaAgotado: Boolean
-) {
-    val (fondo, textoColor, label) = when {
-        estaAgotado -> Triple(
-            MaterialTheme.colorScheme.errorContainer,
-            MaterialTheme.colorScheme.onErrorContainer,
-            "Agotado"
-        )
-        requiereReposicion -> Triple(
-            Color(0xFFFFE082),
-            Color(0xFF5D4037),
-            "Bajo Stock ($stockTexto)"
-        )
-        else -> Triple(
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-            MaterialTheme.colorScheme.onPrimaryContainer,
-            "Stock: $stockTexto"
-        )
-    }
-
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = fondo,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = textoColor,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-        )
-    }
-}
-
-@Composable
-private fun BarraPaginacion(
-    paginaActual: Int,
-    hayMas: Boolean,
-    cargando: Boolean,
-    onAnterior: () -> Unit,
-    onSiguiente: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            FilledTonalButton(
-                onClick = onAnterior,
-                enabled = paginaActual > 1 && !cargando,
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.pressFeedback()
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Anterior",
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Anterior", fontWeight = FontWeight.SemiBold)
-            }
-
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            ) {
-                Text(
-                    text = "Pág. $paginaActual",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
-            }
-
-            FilledTonalButton(
-                onClick = onSiguiente,
-                enabled = hayMas && !cargando,
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.pressFeedback()
-            ) {
-                Text("Siguiente", fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "Siguiente",
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-    }
-}
-
+/**
+ * Componente de formulario de producto con diseño refinado.
+ */
 @Composable
 private fun FormularioProductoCard(
-    formulario: FormularioProducto,
-    registrando: Boolean,
-    onNombreChange: (String) -> Unit,
-    onPrecioChange: (String) -> Unit,
-    onStockChange: (String) -> Unit,
-    onRegistrar: () -> Unit,
-    onCancelar: () -> Unit
+    formulario: FormularioProductoState,
+    onNombreChanged: (String) -> Unit,
+    onPrecioChanged: (String) -> Unit,
+    onStockChanged: (String) -> Unit,
+    onActivoChanged: (Boolean) -> Unit,
+    onRegistrarClick: () -> Unit
 ) {
     Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(20.dp)
+            )
+            .padding(bottom = 12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Registrar Nuevo Medicamento",
+                    text = "Nuevo Registro Farmacéutico",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = "Ktor POST",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
             }
 
-            ValidatedTextField(
+            Spacer(modifier = Modifier.height(14.dp))
+
+            OutlinedTextField(
                 value = formulario.nombre,
-                onValueChange = onNombreChange,
-                label = "Nombre del medicamento",
-                error = formulario.nombreError,
-                leadingIcon = Icons.Default.Medication,
+                onValueChange = onNombreChanged,
+                label = { Text("Nombre del Producto o Medicamento") },
+                placeholder = { Text("Ej. Paracetamol 500 mg") },
+                isError = formulario.errorNombre != null,
+                supportingText = formulario.errorNombre?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ValidatedTextField(
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
                     value = formulario.precio,
-                    onValueChange = onPrecioChange,
-                    label = "Precio (S/)",
-                    error = formulario.precioError,
-                    ayuda = "Ej. 14.50",
-                    keyboardType = KeyboardType.Decimal,
+                    onValueChange = onPrecioChanged,
+                    label = { Text("Precio (S/.)") },
+                    placeholder = { Text("15.50") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = formulario.errorPrecio != null,
+                    supportingText = formulario.errorPrecio?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
                 )
-
-                ValidatedTextField(
+                Spacer(modifier = Modifier.width(10.dp))
+                OutlinedTextField(
                     value = formulario.stock,
-                    onValueChange = onStockChange,
-                    label = "Stock inicial",
-                    error = formulario.stockError,
-                    ayuda = "Unidades",
-                    keyboardType = KeyboardType.Number,
+                    onValueChange = onStockChanged,
+                    label = { Text("Stock Inicial") },
+                    placeholder = { Text("100") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = formulario.errorStock != null,
+                    supportingText = formulario.errorStock?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                FilledTonalButton(
-                    onClick = onCancelar,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1f).pressFeedback()
-                ) {
-                    Text("Cancelar")
-                }
+            Spacer(modifier = Modifier.height(8.dp))
 
-                Button(
-                    onClick = onRegistrar,
-                    enabled = !registrando,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1.5f).pressFeedback()
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = if (formulario.activo) "Producto Habilitado (Activo)" else "Producto Deshabilitado (Inactivo)",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (formulario.activo) "Disponible para órdenes y pedidos" else "Oculto en catálogo público",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = formulario.activo,
+                        onCheckedChange = onActivoChanged
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Button(
+                onClick = onRegistrarClick,
+                enabled = !formulario.estaGuardando,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                if (formulario.estaGuardando) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text("Guardar y Sincronizar Producto", fontWeight = FontWeight.Bold)
+            }
+
+            formulario.mensajeFeedback?.let { feedback ->
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (feedback.startsWith("¡Registro")) SemanticSuccessContainerLight else MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (registrando) "Guardando…" else "Guardar Medicamento",
-                        fontWeight = FontWeight.Bold
+                        text = feedback,
+                        color = if (feedback.startsWith("¡Registro")) OnSemanticSuccessLight else MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(10.dp)
                     )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Tarjeta cuadrada de producto en cuadrícula con visualización de imagen remota y tokens de stock.
+ */
+@Composable
+fun ProductoItemCard(
+    producto: Producto,
+    modifier: Modifier = Modifier
+) {
+    val esBajoStock = producto.requiereReposicion()
+
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = when {
+                    !producto.activo -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    producto.stock == 0 -> SemanticDanger.copy(alpha = 0.35f)
+                    esBajoStock -> SemanticWarning.copy(alpha = 0.35f)
+                    else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                },
+                shape = RoundedCornerShape(18.dp)
+            )
+            .animateContentSize()
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Contenedor Cuadrado / Superior de Imagen
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (producto.imagen.isNotBlank()) {
+                    AsyncImage(
+                        model = producto.imagen,
+                        contentDescription = producto.nombre,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = AppIcons.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+
+                // Tag flotante de Categoría o SKU en la esquina superior
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = if (producto.categoria.isNotBlank() && producto.categoria != "General") producto.categoria else "#00${producto.id}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            // Cuerpo de información del producto
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = producto.nombre,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    minLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "S/. ${((producto.precio * 100).toLong() / 100.0)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+                    ) {
+                        Text(
+                            text = "#00${producto.id}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 9.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Pastilla semántica de stock compacta
+                Surface(
+                    color = when {
+                        !producto.activo -> MaterialTheme.colorScheme.surfaceVariant
+                        producto.stock == 0 -> SemanticDangerContainerLight
+                        producto.stock <= Producto.STOCK_MINIMO -> SemanticWarningContainerLight
+                        else -> SemanticSuccessContainerLight
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    when {
+                                        !producto.activo -> MaterialTheme.colorScheme.outline
+                                        producto.stock == 0 -> SemanticDanger
+                                        producto.stock <= Producto.STOCK_MINIMO -> SemanticWarning
+                                        else -> SemanticSuccess
+                                    }
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = when {
+                                !producto.activo -> "Inactivo"
+                                producto.stock == 0 -> "Agotado (0 u.)"
+                                producto.stock <= Producto.STOCK_MINIMO -> "Bajo: ${producto.stock} u."
+                                else -> "Stock: ${producto.stock} u."
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
+                            maxLines = 1,
+                            color = when {
+                                !producto.activo -> MaterialTheme.colorScheme.onSurfaceVariant
+                                producto.stock == 0 -> OnSemanticDangerLight
+                                producto.stock <= Producto.STOCK_MINIMO -> OnSemanticWarningLight
+                                else -> OnSemanticSuccessLight
+                            }
+                        )
+                    }
                 }
             }
         }

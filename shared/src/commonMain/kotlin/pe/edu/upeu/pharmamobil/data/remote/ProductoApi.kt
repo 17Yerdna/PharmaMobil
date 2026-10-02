@@ -7,13 +7,13 @@ import io.ktor.client.request.parameter
 import pe.edu.upeu.pharmamobil.data.remote.dto.ProductoDto
 
 /**
- * Cliente de servicio remoto para el consumo de la API de productos.
+ * Cliente de servicio remoto para el consumo de la API REST de productos.
  */
 class ProductoApi(private val client: HttpClient) {
 
-    suspend fun obtenerProductos(offset: Int = 0, limite: Int = 10): List<ProductoDto> =
+    suspend fun obtenerProductos(offset: Int? = null, limite: Int? = null): List<ProductoDto> =
         client.get("products") {
-            parameter("offset", offset)
-            parameter("limit", limite)
+            offset?.let { parameter("offset", it) }
+            limite?.let { parameter("limit", it) }
         }.body()
 }

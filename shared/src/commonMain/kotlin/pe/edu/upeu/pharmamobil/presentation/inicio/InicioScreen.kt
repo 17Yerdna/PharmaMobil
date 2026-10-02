@@ -1,37 +1,15 @@
 package pe.edu.upeu.pharmamobil.presentation.inicio
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Inventory2
-import androidx.compose.material.icons.filled.LocalPharmacy
-import androidx.compose.material.icons.filled.Medication
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.WarningAmber
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,347 +19,503 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import pe.edu.upeu.pharmamobil.navigation.Screen
-import pe.edu.upeu.pharmamobil.presentation.components.pressFeedback
-
-private data class OpcionAcceso(
-    val screen: Screen,
-    val icono: ImageVector,
-    val titulo: String,
-    val descripcion: String,
-    val colorContenedor: Color,
-    val colorIcono: Color
-)
+import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+import pe.edu.upeu.pharmamobil.presentation.theme.*
+import pharmamobil.shared.generated.resources.Res
+import pharmamobil.shared.generated.resources.pharmamobil_logo
 
 @Composable
 fun InicioScreen(
-    onNavegar: (Screen) -> Unit,
+    onNavigateToProductos: () -> Unit = {},
+    onNavigateToClientes: () -> Unit = {},
+    onNavigateToPedidos: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .verticalScroll(scrollState)
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HeroHeader()
-
-        SeccionMetricas()
-
-        Text(
-            text = "Módulos de Gestión",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        val opciones = listOf(
-            OpcionAcceso(
-                screen = Screen.Productos,
-                icono = Icons.Default.Medication,
-                titulo = "Inventario de Medicamentos",
-                descripcion = "Catálogo general, control de stock, precios y reposición.",
-                colorContenedor = MaterialTheme.colorScheme.primaryContainer,
-                colorIcono = MaterialTheme.colorScheme.onPrimaryContainer
-            ),
-            OpcionAcceso(
-                screen = Screen.Clientes,
-                icono = Icons.Default.Person,
-                titulo = "Directorio de Clientes",
-                descripcion = "Fichas de contacto, historial y emisión de comprobantes.",
-                colorContenedor = MaterialTheme.colorScheme.secondaryContainer,
-                colorIcono = MaterialTheme.colorScheme.onSecondaryContainer
-            ),
-            OpcionAcceso(
-                screen = Screen.Pedidos,
-                icono = Icons.Default.ShoppingCart,
-                titulo = "Despacho de Pedidos",
-                descripcion = "Gestión de órdenes en curso y seguimiento de entregas.",
-                colorContenedor = MaterialTheme.colorScheme.tertiaryContainer,
-                colorIcono = MaterialTheme.colorScheme.onTertiaryContainer
-            )
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            opciones.forEach { opcion ->
-                TarjetaModulo(
-                    opcion = opcion,
-                    onClick = { onNavegar(opcion.screen) }
+        // ==========================================
+        // HERO BANNER EJECUTIVO CON GRADIENTE
+        // ==========================================
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(24.dp)
                 )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                                MaterialTheme.colorScheme.surface
+                            )
+                        )
+                    )
+                    .padding(20.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                shadowElevation = 3.dp,
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Image(
+                                        painter = painterResource(Res.drawable.pharmamobil_logo),
+                                        contentDescription = "Logo PharmaMobil",
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text(
+                                    text = "PharmaMobil",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Panel de Control Clínico",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = SemanticSuccessContainerLight
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(SemanticSuccess)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "REST Online",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSemanticSuccessLight
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "¡Bienvenido al Sistema de Gestión!",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Monitorea en tiempo real el inventario clasificado, control de pedidos, clientes y alertas de bajo stock desde una única plataforma.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+                }
             }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // ==========================================
+        // ACCIONES RÁPIDAS (QUICK ACTIONS)
+        // ==========================================
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Acciones Rápidas",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-    }
-}
 
-@Composable
-private fun HeroHeader() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Box(
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            BotonAccionRapida(
+                titulo = "Inventario",
+                icono = AppIcons.ShoppingCart,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToProductos
+            )
+            BotonAccionRapida(
+                titulo = "Clientes",
+                icono = AppIcons.Person,
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToClientes
+            )
+            BotonAccionRapida(
+                titulo = "Pedidos",
+                icono = AppIcons.List,
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToPedidos
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // ==========================================
+        // RESUMEN OPERATIVO (BENTO GRID)
+        // ==========================================
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Métricas Operativas",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "Actualizado en vivo",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Fila 1: Productos y Stock Crítico
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            BentoCard(
+                titulo = "Productos",
+                valor = "5",
+                subtitulo = "3 activos · 2 inactivos",
+                badgeTexto = "60% Activo",
+                badgeFondo = SemanticSuccessContainerLight,
+                badgeColor = OnSemanticSuccessLight,
+                icono = AppIcons.ShoppingCart,
+                iconoFondo = MaterialTheme.colorScheme.primaryContainer,
+                iconoColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToProductos
+            )
+
+            BentoCard(
+                titulo = "Stock Crítico",
+                valor = "2",
+                subtitulo = "Amoxicilina / Diclof.",
+                badgeTexto = "Requiere Compra",
+                badgeFondo = SemanticWarningContainerLight,
+                badgeColor = OnSemanticWarningLight,
+                icono = AppIcons.Warning,
+                iconoFondo = SemanticWarningContainerLight,
+                iconoColor = SemanticWarning,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToProductos
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Fila 2: Clientes y Pedidos
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            BentoCard(
+                titulo = "Clientes",
+                valor = "4",
+                subtitulo = "Farmacias registradas",
+                badgeTexto = "100% Activos",
+                badgeFondo = SemanticInfoContainerLight,
+                badgeColor = OnSemanticInfoLight,
+                icono = AppIcons.Person,
+                iconoFondo = MaterialTheme.colorScheme.secondaryContainer,
+                iconoColor = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToClientes
+            )
+
+            BentoCard(
+                titulo = "Pedidos",
+                valor = "4",
+                subtitulo = "1 entregado · 2 pendientes",
+                badgeTexto = "S/. 236.00",
+                badgeFondo = MaterialTheme.colorScheme.surfaceVariant,
+                badgeColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                icono = AppIcons.List,
+                iconoFondo = MaterialTheme.colorScheme.tertiaryContainer,
+                iconoColor = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToPedidos
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // ==========================================
+        // FEED DE ACTIVIDAD Y ESTADO DEL SISTEMA
+        // ==========================================
+        Card(
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                        )
-                    )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(18.dp)
                 )
-                .padding(20.dp)
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.LocalPharmacy,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-                    }
-
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF10B981))
-                            )
-                            Text(
-                                text = "En línea • Sede Central",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "PharmaMobil Pro",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+            Column(modifier = Modifier.padding(18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = AppIcons.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
                     )
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Sistema de Gestión y Control Farmacéutico Multiplataforma",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                        text = "Estado y Actividad del Sistema",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                ItemActividad(
+                    puntoColor = SemanticSuccess,
+                    titulo = "Cliente Ktor REST v1.0",
+                    detalle = "Conexión HTTP activa hacia servidor central de inventario."
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                ItemActividad(
+                    puntoColor = SemanticWarning,
+                    titulo = "Alerta de Reabastecimiento",
+                    detalle = "2 ítems presentan 5 o menos unidades en stock."
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                ItemActividad(
+                    puntoColor = SemanticInfo,
+                    titulo = "Gestión Modular Clean Architecture",
+                    detalle = "Casos de uso desacoplados e inyección Koin configurada."
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SeccionMetricas() {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(
-            text = "Resumen Operativo",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            TarjetaMetrica(
-                titulo = "Medicamentos",
-                valor = "1,248",
-                subtitulo = "+18 nuevos hoy",
-                icono = Icons.Default.Inventory2,
-                colorFondo = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
-                colorIcono = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f)
-            )
-
-            TarjetaMetrica(
-                titulo = "Stock Crítico",
-                valor = "12 alertas",
-                subtitulo = "Requiere reposición",
-                icono = Icons.Default.WarningAmber,
-                colorFondo = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f),
-                colorIcono = MaterialTheme.colorScheme.error,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            TarjetaMetrica(
-                titulo = "Clientes Activos",
-                valor = "342",
-                subtitulo = "98% fidelizados",
-                icono = Icons.Default.People,
-                colorFondo = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f),
-                colorIcono = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.weight(1f)
-            )
-
-            TarjetaMetrica(
-                titulo = "Ventas del Día",
-                valor = "S/ 3,850",
-                subtitulo = "42 despachos",
-                icono = Icons.AutoMirrored.Filled.TrendingUp,
-                colorFondo = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f),
-                colorIcono = MaterialTheme.colorScheme.tertiary,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun TarjetaMetrica(
+private fun BentoCard(
     titulo: String,
     valor: String,
     subtitulo: String,
+    badgeTexto: String,
+    badgeFondo: Color,
+    badgeColor: Color,
     icono: ImageVector,
-    colorFondo: Color,
-    colorIcono: Color,
-    modifier: Modifier = Modifier
+    iconoFondo: Color,
+    iconoColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colorFondo
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
+        modifier = modifier
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(20.dp)
+            )
+            .clickable { onClick() }
     ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = titulo,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Icon(
-                    imageVector = icono,
-                    contentDescription = null,
-                    tint = colorIcono,
-                    modifier = Modifier.size(18.dp)
-                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = iconoFondo,
+                    modifier = Modifier.size(38.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icono,
+                            contentDescription = null,
+                            tint = iconoColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = badgeFondo
+                ) {
+                    Text(
+                        text = badgeTexto,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = badgeColor,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = valor,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
                 text = subtitulo,
-                style = MaterialTheme.typography.labelSmall,
-                color = colorIcono
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp
             )
         }
     }
 }
 
 @Composable
-private fun TarjetaModulo(
-    opcion: OpcionAcceso,
+private fun BotonAccionRapida(
+    titulo: String,
+    icono: ImageVector,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .pressFeedback(scaleDown = 0.97f, onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = containerColor,
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .clickable { onClick() }
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.Center
         ) {
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = opcion.colorContenedor,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = opcion.icono,
-                        contentDescription = null,
-                        tint = opcion.colorIcono,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = opcion.titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = opcion.descripcion,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
             Icon(
-                imageVector = Icons.Default.ChevronRight,
+                imageVector = icono,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline
+                tint = contentColor,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = titulo,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = contentColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun ItemActividad(
+    puntoColor: Color,
+    titulo: String,
+    detalle: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(top = 5.dp)
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(puntoColor)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = detalle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp
             )
         }
     }

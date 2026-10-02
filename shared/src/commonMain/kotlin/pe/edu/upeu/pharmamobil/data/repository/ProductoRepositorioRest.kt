@@ -12,13 +12,26 @@ class ProductoRepositorioRest(
     private val api: ProductoApi
 ) : ProductoRepository {
 
-    override suspend fun listar(offset: Int, limite: Int): List<Producto> {
-        return api.obtenerProductos(offset = offset, limite = limite).map { it.toDomain() }
+    private var productosLocales: MutableList<Producto> = mutableListOf()
+
+    override suspend fun listar(): List<Producto> {
+        return try {
+            val remotos = api.obtenerProductos().map { it.toDomain() }
+            productosLocales = (productosLocales + remotos).distinctBy { it.id }.toMutableList()
+            productosLocales
+        } catch (e: Exception) {
+            if (productosLocales.isNotEmpty()) {
+                productosLocales
+            } else {
+                throw e
+            }
+        }
     }
 
     override suspend fun registrar(producto: Producto): Producto {
-        // En Sesión 7 la API remota pública se consume mediante GET (listar).
-        // Se preserva la compatibilidad con el caso de uso de registro.
-        return producto.copy(id = (1000L..9999L).random())
+        val nuevoId = (1000L..9999L).random()
+        val nuevoProducto = producto.copy(id = nuevoId)
+        productosLocales.add(0, nuevoProducto)
+        return nuevoProducto
     }
 }

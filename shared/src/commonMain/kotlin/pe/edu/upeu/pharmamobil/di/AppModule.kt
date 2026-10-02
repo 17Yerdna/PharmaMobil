@@ -1,54 +1,53 @@
 package pe.edu.upeu.pharmamobil.di
 
-import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
-import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
+import org.koin.dsl.KoinAppDeclaration
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
 import pe.edu.upeu.pharmamobil.data.remote.crearHttpClient
-import pe.edu.upeu.pharmamobil.data.repository.ClienteRepositorioEnMemoria
 import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
-import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarClientesUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarClienteUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
-import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 
-
+/**
+ * Módulo de la capa de datos: Registra HttpClient, ProductoApi y ProductoRepositorioRest.
+ */
 val dataModule = module {
     single { crearHttpClient(get()) }
-    single { ProductoApi(get()) }
-    single<ProductoRepository> { ProductoRepositorioRest(get()) }
-    single<ClienteRepository> { ClienteRepositorioEnMemoria() }
+    singleOf(::ProductoApi)
+    singleOf(::ProductoRepositorioRest) bind ProductoRepository::class
 }
 
+/**
+ * Módulo de la capa de dominio: Registra los casos de uso.
+ */
 val domainModule = module {
-    factory { RegistrarProductoUseCase(get()) }
-    factory { ListarProductosUseCase(get()) }
-    factory { RegistrarClienteUseCase(get()) }
-    factory { ListarClientesUseCase(get()) }
+    factoryOf(::RegistrarProductoUseCase)
 }
 
-val presentationModule = module {
-    viewModel { ProductoViewModel(get(), get()) }
-    viewModel { ClienteViewModel(get(), get()) }
+/**
+ * Módulo de la capa de presentación: Registra el ViewModel.
+ */
+val viewModelModule = module {
+    viewModelOf(::ProductoViewModel)
 }
 
-
-expect val platformModule: Module
-
-fun initKoin(configuracionAdicional: KoinApplication.() -> Unit = {}) {
+/**
+ * Inicializador global de Koin para todas las plataformas.
+ */
+fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
     startKoin {
-        configuracionAdicional()
+        appDeclaration()
         modules(
+            platformModule,
             dataModule,
             domainModule,
-            presentationModule,
-            platformModule
+            viewModelModule
         )
     }
-}

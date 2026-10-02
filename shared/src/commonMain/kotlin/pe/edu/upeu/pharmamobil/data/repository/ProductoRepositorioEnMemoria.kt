@@ -1,46 +1,37 @@
 package pe.edu.upeu.pharmamobil.data.repository
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
 /**
- * Almacenamiento en memoria de productos. El id lo asigna el repositorio,
- * no la pantalla, para evitar identificadores duplicados.
- *
- * El delay simula la latencia que traera el backend REST, de modo que el
- * estado de carga de la pantalla sea visible desde ahora.
- *
- * Koin lo registra como single, asi que es un objeto compartido y sus metodos
- * son suspend: nada garantiza que dos llamadas no se crucen. El [Mutex]
- * protege la lista y el contador de ids de esa carrera.
+ * Implementación en memoria del repositorio de productos.
+ * Simula latencia mediante delay() para exponer los estados de carga en la UI.
+ * Asigna de forma determinista el identificador de cada producto nuevo.
  */
 class ProductoRepositorioEnMemoria : ProductoRepository {
 
-    private val candado = Mutex()
-    private val productos = mutableListOf<Producto>()
-    private var siguienteId = 1L
+    // Lista mutable interna en memoria con datos simulados iniciales
+    private val inventario = mutableListOf(
+        Producto(id = 1L, nombre = "Paracetamol", precio = 15.50, stock = 100, activo = true),
+        Producto(id = 2L, nombre = "Ibuprofeno", precio = 18.90, stock = 50, activo = true),
+        Producto(id = 3L, nombre = "Amoxicilina", precio = 25.00, stock = 5, activo = true),
+        Producto(id = 4L, nombre = "Loratadina", precio = 12.50, stock = 0, activo = false),
+        Producto(id = 5L, nombre = "Diclofenaco", precio = 20.00, stock = 3, activo = true)
+    )
+
+    private var nextId = 6L
 
     override suspend fun registrar(producto: Producto): Producto {
-        delay(RETARDO_REGISTRO_MS)
-        return candado.withLock {
-            val guardado = producto.copy(id = siguienteId++)
-            productos.add(guardado)
-            guardado
-        }
+        // Retardo simulado para visibilidad de estados de carga (entre 300 y 800 ms)
+        delay(400)
+        val productoConId = producto.copy(id = nextId++)
+        inventario.add(0, productoConId)
+        return productoConId
     }
 
-    override suspend fun listar(offset: Int, limite: Int): List<Producto> {
-        delay(RETARDO_LISTADO_MS)
-        return candado.withLock {
-            productos.drop(offset).take(limite)
-        }
-    }
-
-    private companion object {
-        const val RETARDO_REGISTRO_MS = 400L
-        const val RETARDO_LISTADO_MS = 600L
+    override suspend fun listar(): List<Producto> {
+        delay(500)
+        return inventario.toList()
     }
 }
