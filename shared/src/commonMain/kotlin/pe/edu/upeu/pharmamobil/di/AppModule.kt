@@ -1,7 +1,6 @@
 package pe.edu.upeu.pharmamobil.di
 
 import org.koin.core.context.startKoin
-import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -12,8 +11,13 @@ import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
 import pe.edu.upeu.pharmamobil.data.remote.crearHttpClient
 import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
+import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
+
+private const val CATEGORIA_POR_DEFECTO = 1L
 
 /**
  * Módulo de la capa de datos: Registra HttpClient, ProductoApi y ProductoRepositorioRest.
@@ -21,14 +25,19 @@ import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 val dataModule = module {
     single { crearHttpClient(get()) }
     singleOf(::ProductoApi)
-    singleOf(::ProductoRepositorioRest) bind ProductoRepository::class
+    single<ProductoRepository> {
+        ProductoRepositorioRest(get(), CATEGORIA_POR_DEFECTO)
+    }
 }
 
 /**
- * Módulo de la capa de dominio: Registra los casos de uso.
+ * Módulo de la capa de dominio: Registra los casos de uso del CRUD de productos.
  */
 val domainModule = module {
+    factoryOf(::ListarProductosUseCase)
     factoryOf(::RegistrarProductoUseCase)
+    factoryOf(::ActualizarProductoUseCase)
+    factoryOf(::EliminarProductoUseCase)
 }
 
 /**

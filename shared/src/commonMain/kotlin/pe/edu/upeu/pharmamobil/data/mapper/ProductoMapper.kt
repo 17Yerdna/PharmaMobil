@@ -1,11 +1,45 @@
 package pe.edu.upeu.pharmamobil.data.mapper
 
 import pe.edu.upeu.pharmamobil.data.remote.dto.ProductoDto
+import pe.edu.upeu.pharmamobil.data.remote.dto.ProductoRequestDto
+import pe.edu.upeu.pharmamobil.data.remote.dto.ProductoResponseDto
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 
 /**
- * Función de extensión que convierte un DTO de red al modelo de dominio.
- * Este archivo es la única pieza que conoce ambas capas — mantenerlo en data.mapper.
+ * Mapeo de [ProductoResponseDto] hacia la entidad de dominio [Producto].
+ */
+fun ProductoResponseDto.toDomain(): Producto {
+    val urlLimpia = images.firstOrNull()
+        ?.replace("[", "")
+        ?.replace("]", "")
+        ?.replace("\"", "")
+        ?.replace("\\", "")
+        ?.trim() ?: ""
+
+    return Producto(
+        id = id,
+        nombre = nombre,
+        precio = precio,
+        stock = stock,
+        activo = estado,
+        imagen = urlLimpia,
+        categoria = categoriaNombre ?: "General"
+    )
+}
+
+/**
+ * Mapeo de la entidad [Producto] hacia [ProductoRequestDto] para envíos POST / PUT.
+ */
+fun Producto.toRequest(categoriaId: Long = 1L): ProductoRequestDto = ProductoRequestDto(
+    nombre = nombre,
+    precio = precio,
+    stock = stock,
+    estado = activo,
+    categoriaId = categoriaId
+)
+
+/**
+ * Mapeo de compatibilidad para [ProductoDto].
  */
 fun ProductoDto.toDomain(): Producto {
     val urlLimpia = images.firstOrNull()
