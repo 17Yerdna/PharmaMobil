@@ -13,22 +13,40 @@ sealed interface FaseInventario {
 }
 
 /**
- * Modela el estado reactivo del formulario de creación de productos,
- * incluyendo los tres mensajes de error específicos.
+ * Modela el estado de la operación de mutación CRUD en curso,
+ * desacoplándola de la fase global de la pantalla para evitar parpadeos (Punto de Control 5).
+ */
+sealed interface Operacion {
+    data object Inactiva : Operacion
+    data class EnCurso(val tipo: Tipo) : Operacion
+    data class Fallida(val mensaje: String) : Operacion
+
+    enum class Tipo { Crear, Actualizar, Eliminar }
+}
+
+/**
+ * Modela el estado reactivo del formulario de creación y edición de productos,
+ * mapeando los errores campo por campo devueltos por el servidor o validados localmente.
  */
 data class FormularioProductoState(
+    val id: Long? = null,
     val nombre: String = "",
     val precio: String = "",
     val stock: String = "",
     val activo: Boolean = true,
-    val errorNombre: String? = null,
-    val errorPrecio: String? = null,
-    val errorStock: String? = null,
+    val categoriaId: Long = 1L,
+    val imagen: String = "",
+    val nombreError: String? = null,
+    val precioError: String? = null,
+    val stockError: String? = null,
     val estaGuardando: Boolean = false,
     val mensajeFeedback: String? = null
 ) {
+    val esEdicion: Boolean
+        get() = id != null && id > 0L
+
     val tieneErrores: Boolean
-        get() = errorNombre != null || errorPrecio != null || errorStock != null
+        get() = nombreError != null || precioError != null || stockError != null
 }
 
 /**
@@ -36,10 +54,13 @@ data class FormularioProductoState(
  */
 data class ProductoUiState(
     val fase: FaseInventario = FaseInventario.Cargando,
+    val operacion: Operacion = Operacion.Inactiva,
     val tabSeleccionada: Int = 0, // 0: Activos, 1: Inactivos, 2: Bajo Stock
     val busqueda: String = "",
     val formulario: FormularioProductoState = FormularioProductoState(),
     val mostrarFormulario: Boolean = false,
+    val productoAEliminar: Producto? = null,
+    val mensajeExito: String? = null,
     val totalActivos: Int = 0,
     val totalInactivos: Int = 0,
     val totalBajoStock: Int = 0
