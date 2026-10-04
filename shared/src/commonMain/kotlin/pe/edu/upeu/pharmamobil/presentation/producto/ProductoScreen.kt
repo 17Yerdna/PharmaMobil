@@ -30,11 +30,11 @@ import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.presentation.theme.*
 
 /**
- * Pantalla de Inventario de Productos rediseñada con estándar SaaS de alta fidelidad:
- * - Buscador reactivo integrado.
- * - Pestañas segmentadas con contadores en pastillas.
- * - Tarjetas de productos con SKU, precio destacado y pastillas semánticas de stock.
- * - Formulario colapsable con validaciones reactivas y estados de carga.
+ * Pantalla de Inventario de Productos con CRUD REST completo:
+ * - Listado paginado en cuadrícula cuadrada con imágenes y paleta Mostaza.
+ * - Formulario reactivo para Crear (POST) y Editar (PUT) con errores del servidor campo por campo.
+ * - Diálogo de confirmación para Eliminación (DELETE 204 No Content).
+ * - Manejo de estados desacoplado sin parpadeo (FaseInventario vs Operacion).
  */
 @Composable
 fun ProductoScreen(
@@ -70,7 +70,7 @@ fun ProductoScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Catálogo sincronizado por REST",
+                    text = "Catálogo sincronizado por Ktor REST",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -103,6 +103,106 @@ fun ProductoScreen(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
+            }
+        }
+
+        // Indicador de operación global en curso
+        if (uiState.operacion is Operacion.EnCurso) {
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        }
+
+        // Banner de Éxito
+        uiState.mensajeExito?.let { mensaje ->
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = SemanticSuccessContainerLight,
+                border = androidx.compose.foundation.BorderStroke(1.dp, SemanticSuccess.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = AppIcons.CheckCircle,
+                            contentDescription = null,
+                            tint = SemanticSuccess,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = mensaje,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSemanticSuccessLight,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    IconButton(
+                        onClick = { viewModel.descartarMensajes() },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Close,
+                            contentDescription = "Cerrar",
+                            tint = OnSemanticSuccessLight,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Banner de Operación Fallida
+        (uiState.operacion as? Operacion.Fallida)?.let { opFallida ->
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.errorContainer,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = AppIcons.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = opFallida.mensaje,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    IconButton(
+                        onClick = { viewModel.descartarMensajes() },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Close,
+                            contentDescription = "Cerrar",
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
             }
         }
 
@@ -229,7 +329,8 @@ fun ProductoScreen(
                 onPrecioChanged = viewModel::onPrecioChanged,
                 onStockChanged = viewModel::onStockChanged,
                 onActivoChanged = viewModel::onActivoChanged,
-                onRegistrarClick = viewModel::registrarProducto
+                onGuardarClick = viewModel::guardarProducto,
+                onCancelarClick = viewModel::cerrarFormulario
             )
         }
 
@@ -314,7 +415,12 @@ fun ProductoScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         items(fase.productos, key = { it.id }) { producto ->
-                            ProductoItemCard(producto = producto)
+                            ProductoItemCard(
+                                producto = producto,
+                                onEditarClick = { viewModel.iniciarEdicion(producto) },
+                                onEliminarClick = { viewModel.solicitarEliminacion(producto) },
+                                habilitado = uiState.operacion !is Operacion.EnCurso
+                            )
                         }
                     }
                 }
@@ -390,10 +496,53 @@ fun ProductoScreen(
             }
         }
     }
+
+    // ==========================================
+    // DIÁLOGO DE CONFIRMACIÓN DE ELIMINACIÓN
+    // ==========================================
+    uiState.productoAEliminar?.let { producto ->
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelarEliminacion() },
+            title = {
+                Text(
+                    text = "Confirmar Eliminación",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "¿Está seguro de eliminar '${producto.nombre}' (#00${producto.id})? Esta acción ejecutará la mutación DELETE en el servidor REST.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmarEliminacion() },
+                    colors = ButtonDefaults.buttonColors(containerColor = SemanticDanger),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Eliminar", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { viewModel.cancelarEliminacion() },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Cancelar")
+                }
+            },
+            shape = RoundedCornerShape(18.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
 }
 
 /**
- * Componente de formulario de producto con diseño refinado.
+ * Componente de formulario de producto con soporte para Crear (POST) y Editar (PUT)
+ * y visualización de errores devueltos por el servidor campo por campo.
  */
 @Composable
 private fun FormularioProductoCard(
@@ -402,7 +551,8 @@ private fun FormularioProductoCard(
     onPrecioChanged: (String) -> Unit,
     onStockChanged: (String) -> Unit,
     onActivoChanged: (Boolean) -> Unit,
-    onRegistrarClick: () -> Unit
+    onGuardarClick: () -> Unit,
+    onCancelarClick: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -424,7 +574,7 @@ private fun FormularioProductoCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Nuevo Registro Farmacéutico",
+                    text = if (formulario.esEdicion) "Editar Producto #${formulario.id}" else "Nuevo Registro Farmacéutico",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -434,7 +584,7 @@ private fun FormularioProductoCard(
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
-                        text = "Ktor POST",
+                        text = if (formulario.esEdicion) "Ktor PUT" else "Ktor POST",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -445,13 +595,14 @@ private fun FormularioProductoCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Campo Nombre con error de validación bajo el input
             OutlinedTextField(
                 value = formulario.nombre,
                 onValueChange = onNombreChanged,
                 label = { Text("Nombre del Producto o Medicamento") },
                 placeholder = { Text("Ej. Paracetamol 500 mg") },
-                isError = formulario.errorNombre != null,
-                supportingText = formulario.errorNombre?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                isError = formulario.nombreError != null,
+                supportingText = formulario.nombreError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -460,27 +611,29 @@ private fun FormularioProductoCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(modifier = Modifier.fillMaxWidth()) {
+                // Campo Precio con error de validación bajo el input
                 OutlinedTextField(
                     value = formulario.precio,
                     onValueChange = onPrecioChanged,
                     label = { Text("Precio (S/.)") },
                     placeholder = { Text("15.50") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = formulario.errorPrecio != null,
-                    supportingText = formulario.errorPrecio?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    isError = formulario.precioError != null,
+                    supportingText = formulario.precioError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
+                // Campo Stock con error de validación bajo el input
                 OutlinedTextField(
                     value = formulario.stock,
                     onValueChange = onStockChanged,
                     label = { Text("Stock Inicial") },
                     placeholder = { Text("100") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = formulario.errorStock != null,
-                    supportingText = formulario.errorStock?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    isError = formulario.stockError != null,
+                    supportingText = formulario.stockError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
@@ -522,38 +675,37 @@ private fun FormularioProductoCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            Button(
-                onClick = onRegistrarClick,
-                enabled = !formulario.estaGuardando,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-            ) {
-                if (formulario.estaGuardando) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text("Guardar y Sincronizar Producto", fontWeight = FontWeight.Bold)
-            }
-
-            formulario.mensajeFeedback?.let { feedback ->
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (feedback.startsWith("¡Registro")) SemanticSuccessContainerLight else MaterialTheme.colorScheme.errorContainer,
-                    modifier = Modifier.fillMaxWidth()
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = onCancelarClick,
+                    enabled = !formulario.estaGuardando,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
                 ) {
+                    Text("Cancelar")
+                }
+
+                Button(
+                    onClick = onGuardarClick,
+                    enabled = !formulario.estaGuardando,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .weight(2f)
+                        .height(48.dp)
+                ) {
+                    if (formulario.estaGuardando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                     Text(
-                        text = feedback,
-                        color = if (feedback.startsWith("¡Registro")) OnSemanticSuccessLight else MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(10.dp)
+                        text = if (formulario.esEdicion) "Guardar Cambios" else "Registrar Producto",
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -562,11 +714,15 @@ private fun FormularioProductoCard(
 }
 
 /**
- * Tarjeta cuadrada de producto en cuadrícula con visualización de imagen remota y tokens de stock.
+ * Tarjeta cuadrada de producto en cuadrícula con visualización de imagen remota,
+ * pastillas de stock y botones de acción rápida de edición y eliminación.
  */
 @Composable
 fun ProductoItemCard(
     producto: Producto,
+    onEditarClick: () -> Unit = {},
+    onEliminarClick: () -> Unit = {},
+    habilitado: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val esBajoStock = producto.requiereReposicion()
@@ -728,6 +884,43 @@ fun ProductoItemCard(
                                 producto.stock <= Producto.STOCK_MINIMO -> OnSemanticWarningLight
                                 else -> OnSemanticSuccessLight
                             }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Fila de acciones CRUD: Editar y Eliminar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = onEditarClick,
+                        enabled = habilitado,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Edit,
+                            contentDescription = "Editar producto",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    IconButton(
+                        onClick = onEliminarClick,
+                        enabled = habilitado,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Delete,
+                            contentDescription = "Eliminar producto",
+                            tint = SemanticDanger,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
