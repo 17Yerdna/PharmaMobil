@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.model.Producto
+import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
 import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
@@ -23,7 +24,8 @@ class ProductoViewModel(
     private val listarProductosUseCase: ListarProductosUseCase,
     private val registrarProductoUseCase: RegistrarProductoUseCase,
     private val actualizarProductoUseCase: ActualizarProductoUseCase,
-    private val eliminarProductoUseCase: EliminarProductoUseCase
+    private val eliminarProductoUseCase: EliminarProductoUseCase,
+    private val compartidor: Compartidor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductoUiState())
@@ -95,6 +97,18 @@ class ProductoViewModel(
                 mostrarFormulario = true
             )
         }
+    }
+
+    fun mostrarDetalle(producto: ProductoUi) {
+        _uiState.update { it.copy(productoEnDetalle = producto) }
+    }
+
+    fun cerrarDetalle() {
+        _uiState.update { it.copy(productoEnDetalle = null) }
+    }
+
+    fun compartirProducto(producto: Producto) {
+        compartidor.compartir(producto.comoTextoParaCompartir())
     }
 
     fun cerrarFormulario() {
@@ -340,7 +354,7 @@ class ProductoViewModel(
         val fase = if (productosFiltrados.isEmpty()) {
             FaseInventario.SinProductos
         } else {
-            FaseInventario.ConProductos(productosFiltrados)
+            FaseInventario.ConProductos(productosFiltrados.map(::ProductoUi))
         }
 
         _uiState.update {

@@ -414,9 +414,12 @@ fun ProductoScreen(
                         contentPadding = PaddingValues(bottom = 16.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        items(fase.productos, key = { it.id }) { producto ->
+                        items(fase.productos, key = { it.id }) { productoUi ->
+                            val producto = productoUi.producto
                             ProductoItemCard(
                                 producto = producto,
+                                precioFormateado = productoUi.precioFormateado,
+                                onDetalleClick = { viewModel.mostrarDetalle(productoUi) },
                                 onEditarClick = { viewModel.iniciarEdicion(producto) },
                                 onEliminarClick = { viewModel.solicitarEliminacion(producto) },
                                 habilitado = uiState.operacion !is Operacion.EnCurso
@@ -536,6 +539,32 @@ fun ProductoScreen(
             },
             shape = RoundedCornerShape(18.dp),
             containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
+    uiState.productoEnDetalle?.let { productoUi ->
+        val producto = productoUi.producto
+        AlertDialog(
+            onDismissRequest = { viewModel.cerrarDetalle() },
+            title = { Text(producto.nombre, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Precio: ${productoUi.precioFormateado}")
+                    Text("Stock disponible: ${producto.stock} unidades")
+                    Text(if (producto.activo) "Estado: Activo" else "Estado: Inactivo")
+                }
+            },
+            confirmButton = {
+                Button(onClick = { viewModel.compartirProducto(producto) }) {
+                    Text("Compartir")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { viewModel.cerrarDetalle() }) {
+                    Text("Cerrar")
+                }
+            },
+            shape = RoundedCornerShape(18.dp)
         )
     }
 }
@@ -720,6 +749,8 @@ private fun FormularioProductoCard(
 @Composable
 fun ProductoItemCard(
     producto: Producto,
+    precioFormateado: String,
+    onDetalleClick: () -> Unit = {},
     onEditarClick: () -> Unit = {},
     onEliminarClick: () -> Unit = {},
     habilitado: Boolean = true,
@@ -815,7 +846,7 @@ fun ProductoItemCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "S/. ${((producto.precio * 100).toLong() / 100.0)}",
+                        text = precioFormateado,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold
@@ -896,6 +927,19 @@ fun ProductoItemCard(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    IconButton(
+                        onClick = onDetalleClick,
+                        enabled = habilitado,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Info,
+                            contentDescription = "Ver detalle del producto",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
                     IconButton(
                         onClick = onEditarClick,
                         enabled = habilitado,

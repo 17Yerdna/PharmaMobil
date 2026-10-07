@@ -8,7 +8,7 @@ import pe.edu.upeu.pharmamobil.domain.model.Producto
 sealed interface FaseInventario {
     data object Cargando : FaseInventario
     data object SinProductos : FaseInventario
-    data class ConProductos(val productos: List<Producto>) : FaseInventario
+    data class ConProductos(val productos: List<ProductoUi>) : FaseInventario
     data class Error(val mensaje: String) : FaseInventario
 }
 
@@ -60,6 +60,7 @@ data class ProductoUiState(
     val formulario: FormularioProductoState = FormularioProductoState(),
     val mostrarFormulario: Boolean = false,
     val productoAEliminar: Producto? = null,
+    val productoEnDetalle: ProductoUi? = null,
     val mensajeExito: String? = null,
     val totalActivos: Int = 0,
     val totalInactivos: Int = 0,

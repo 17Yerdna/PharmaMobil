@@ -79,3 +79,11 @@ El cliente HTTP está construido sobre **Ktor Client 3.x** integrado con **Koin*
 - **Pruebas Unitarias:** `./gradlew :shared:testAndroidHostTest`
 - **Compilación Android Debug:** `./gradlew :androidApp:assembleDebug`
 - **Instalación en Dispositivo/Emulador:** `./gradlew :androidApp:installDebug`
+
+---
+
+## Capacidades nativas
+
+- **Moneda local:** `formatearSoles` usa `NumberFormat` en Android y `NSNumberFormatter` en iOS para mostrar precios en soles peruanos.
+- **Compartir producto:** la UI compartida delega en `Compartidor`; Android abre el selector `ACTION_SEND` e iOS presenta `UIActivityViewController`.
+- **Inyección por plataforma:** ambas implementaciones se registran en `platformModule` mediante Koin, sin referencias Android/UIKit desde `commonMain`.
