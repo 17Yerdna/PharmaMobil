@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import pe.edu.upeu.pharmamobil.platform.InfoDispositivo
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +35,7 @@ fun InicioScreen(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    val infoDispositivo = remember { InfoDispositivo() }
 
     Column(
         modifier = modifier
@@ -353,6 +356,14 @@ fun InicioScreen(
                     puntoColor = SemanticInfo,
                     titulo = "Gestión Modular Clean Architecture",
                     detalle = "Casos de uso desacoplados e inyección Koin configurada."
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                ItemActividad(
+                    puntoColor = MaterialTheme.colorScheme.primary,
+                    titulo = "Capacidad Nativa (${infoDispositivo.sistema})",
+                    detalle = "${infoDispositivo.version} • ${infoDispositivo.modelo}"
                 )
             }
         }
