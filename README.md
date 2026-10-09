@@ -82,8 +82,21 @@ El cliente HTTP está construido sobre **Ktor Client 3.x** integrado con **Koin*
 
 ---
 
-## Capacidades nativas
+## Código específico de plataforma
 
-- **Moneda local:** `formatearSoles` usa `NumberFormat` en Android y `NSNumberFormatter` en iOS para mostrar precios en soles peruanos.
-- **Compartir producto:** la UI compartida delega en `Compartidor`; Android abre el selector `ACTION_SEND` e iOS presenta `UIActivityViewController`.
-- **Inyección por plataforma:** ambas implementaciones se registran en `platformModule` mediante Koin, sin referencias Android/UIKit desde `commonMain`.
+El proyecto implementa un desacoplamiento estricto entre la lógica multiplataforma (`commonMain`) y las capacidades dependientes del sistema operativo mediante los patrones `expect`/`actual` e Inyección de Dependencias con Koin.
+
+### Inventario de Capacidades Nativas
+
+| Capacidad | Clasificación | Mecanismo | Firma del expect / Contrato | Rutas de Archivos en Repositorio | API usada en Android | API usada en iOS | Propósito |
+|---|---|---|---|---|---|---|---|
+| **Detección de Plataforma** | Infraestructura previa | `expect` / `actual` (función) | `expect fun getPlatform(): Platform` | • `shared/src/commonMain/kotlin/pe/edu/upeu/pharmamobil/Platform.kt`<br>• `shared/src/androidMain/kotlin/pe/edu/upeu/pharmamobil/Platform.android.kt`<br>• `shared/src/iosMain/kotlin/pe/edu/upeu/pharmamobil/Platform.ios.kt` | `AndroidPlatform` con `Build.VERSION.SDK_INT` | `IOSPlatform` con `UIDevice.currentDevice` | Identificación básica de plataforma. |
+| **Formateo Monetario** | Sesión 09 | `expect` / `actual` (función) | `expect fun formatearSoles(valor: Double): String` | • `shared/src/commonMain/kotlin/pe/edu/upeu/pharmamobil/platform/Formato.kt`<br>• `shared/src/androidMain/kotlin/pe/edu/upeu/pharmamobil/platform/Formato.android.kt`<br>• `shared/src/iosMain/kotlin/pe/edu/upeu/pharmamobil/platform/Formato.ios.kt` | `NumberFormat` con `Locale("es", "PE")` | `NSNumberFormatter` con locale `es_PE` | Formateo monetario en moneda peruana (`S/ 8.50`). |
+| **Compartir Producto** | Sesión 09 | Interfaz + Koin DI | `interface Compartidor {`<br>`&nbsp;&nbsp;fun compartir(texto: String)`<br>`}` | • `shared/src/commonMain/kotlin/pe/edu/upeu/pharmamobil/domain/platform/Compartidor.kt`<br>• `shared/src/androidMain/kotlin/pe/edu/upeu/pharmamobil/platform/CompartidorAndroid.kt`<br>• `shared/src/iosMain/kotlin/pe/edu/upeu/pharmamobil/platform/CompartidorIos.kt` | `Intent.ACTION_SEND` con `Context` y chooser | `UIActivityViewController` modal | Delegación del diálogo nativo del sistema para compartir. |
+| **Módulo de Inyección** | Sesión 09 | `expect` / `actual` (módulo) | `expect val platformModule: Module` | • `shared/src/commonMain/kotlin/pe/edu/upeu/pharmamobil/di/PlatformModule.kt`<br>• `shared/src/androidMain/kotlin/pe/edu/upeu/pharmamobil/di/PlatformModule.android.kt`<br>• `shared/src/iosMain/kotlin/pe/edu/upeu/pharmamobil/di/PlatformModule.ios.kt` | `module` con inyección contextual de `Context` | `module` sin contexto | Provisión de dependencias de plataforma en Koin. |
+| **Información del Dispositivo** | 3ra Capacidad (Autónoma) | `expect` / `actual` (clase) | `expect class InfoDispositivo()`<br>`val sistema: String`<br>`val version: String`<br>`val modelo: String` | • `shared/src/commonMain/kotlin/pe/edu/upeu/pharmamobil/platform/InfoDispositivo.kt`<br>• `shared/src/androidMain/kotlin/pe/edu/upeu/pharmamobil/platform/InfoDispositivo.android.kt`<br>• `shared/src/iosMain/kotlin/pe/edu/upeu/pharmamobil/platform/InfoDispositivo.ios.kt` | `Build.VERSION` y `Build.MODEL` | `UIDevice.currentDevice` | Visualización de información del dispositivo cliente. |
+
+### Verificación de Aislamiento
+- `commonMain` permanece 100% puro, sin dependencias ni imports de `android.*`, `java.*` o `platform.*`.
+- El compilador de Kotlin Multiplatform garantiza en tiempo de compilación (`compileAndroidMain` / `compileIosMain`) la existencia de las declaraciones `actual` correspondientes para cada declaración `expect`.
+
