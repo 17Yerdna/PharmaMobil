@@ -39,6 +39,7 @@ import pe.edu.upeu.pharmamobil.presentation.theme.*
 @Composable
 fun ProductoScreen(
     viewModel: ProductoViewModel,
+    puedeEscribir: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -62,7 +63,7 @@ fun ProductoScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Inventario de Productos",
                     style = MaterialTheme.typography.titleMedium,
@@ -76,33 +77,59 @@ fun ProductoScreen(
                 )
             }
 
-            Button(
-                onClick = { viewModel.toggleMostrarFormulario() },
-                shape = RoundedCornerShape(12.dp),
-                colors = if (uiState.mostrarFormulario) {
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                },
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-            ) {
-                Icon(
-                    imageVector = if (uiState.mostrarFormulario) AppIcons.Close else AppIcons.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = if (uiState.mostrarFormulario) "Cerrar" else "Nuevo",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
-                )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (uiState.esDepuracion) {
+                    OutlinedButton(
+                        onClick = { viewModel.simularOperacion403() },
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Warning,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Test 403",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
+                if (puedeEscribir) {
+                    Button(
+                        onClick = { viewModel.toggleMostrarFormulario() },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = if (uiState.mostrarFormulario) {
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        },
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (uiState.mostrarFormulario) AppIcons.Close else AppIcons.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (uiState.mostrarFormulario) "Cerrar" else "Nuevo",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
 
@@ -422,8 +449,10 @@ fun ProductoScreen(
                                 onDetalleClick = { viewModel.mostrarDetalle(productoUi) },
                                 onEditarClick = { viewModel.iniciarEdicion(producto) },
                                 onEliminarClick = { viewModel.solicitarEliminacion(producto) },
-                                habilitado = uiState.operacion !is Operacion.EnCurso
+                                habilitado = uiState.operacion !is Operacion.EnCurso,
+                                puedeEscribir = puedeEscribir
                             )
+
                         }
                     }
                 }
@@ -754,6 +783,7 @@ fun ProductoItemCard(
     onEditarClick: () -> Unit = {},
     onEliminarClick: () -> Unit = {},
     habilitado: Boolean = true,
+    puedeEscribir: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val esBajoStock = producto.requiereReposicion()
@@ -940,34 +970,37 @@ fun ProductoItemCard(
                         )
                     }
 
-                    IconButton(
-                        onClick = onEditarClick,
-                        enabled = habilitado,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = AppIcons.Edit,
-                            contentDescription = "Editar producto",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    if (puedeEscribir) {
+                        IconButton(
+                            onClick = onEditarClick,
+                            enabled = habilitado,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = AppIcons.Edit,
+                                contentDescription = "Editar producto",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
 
-                    IconButton(
-                        onClick = onEliminarClick,
-                        enabled = habilitado,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = AppIcons.Delete,
-                            contentDescription = "Eliminar producto",
-                            tint = SemanticDanger,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        IconButton(
+                            onClick = onEliminarClick,
+                            enabled = habilitado,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = AppIcons.Delete,
+                                contentDescription = "Eliminar producto",
+                                tint = SemanticDanger,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
+
             }
         }
     }

@@ -15,6 +15,7 @@ import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 import pe.edu.upeu.pharmamobil.domain.session.SessionCoordinator
 import pe.edu.upeu.pharmamobil.domain.usecase.*
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
+import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
 
 private const val CATEGORIA_POR_DEFECTO = 1L
 
@@ -51,6 +52,7 @@ val domainModule = module {
  */
 val viewModelModule = module {
     viewModelOf(::ProductoViewModel)
+    viewModelOf(::SesionViewModel)
 }
 
 /**

@@ -15,6 +15,7 @@ import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.platform.PlatformConfig
 
 /**
  * ViewModel multiplataforma para el módulo de Productos.
@@ -25,10 +26,11 @@ class ProductoViewModel(
     private val registrarProductoUseCase: RegistrarProductoUseCase,
     private val actualizarProductoUseCase: ActualizarProductoUseCase,
     private val eliminarProductoUseCase: EliminarProductoUseCase,
-    private val compartidor: Compartidor
+    private val compartidor: Compartidor,
+    private val platformConfig: PlatformConfig
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProductoUiState())
+    private val _uiState = MutableStateFlow(ProductoUiState(esDepuracion = platformConfig.esDepuracion))
     val uiState: StateFlow<ProductoUiState> = _uiState.asStateFlow()
 
     private var inventarioCompleto: List<Producto> = emptyList()
@@ -282,6 +284,41 @@ class ProductoViewModel(
                 .onFailure { fallo ->
                     manejarFallo(fallo)
                 }
+        }
+    }
+
+    /**
+     * Intenta registrar un producto para verificar el control de acceso (RBAC) en el backend.
+     * Si el usuario autenticado carece del permiso CATALOGO_ESCRIBIR (e.g. vendedor), el backend responde 403 Forbidden.
+     * Solo disponible en modo depuración (BuildConfig.DEBUG).
+     */
+    fun simularOperacion403() {
+        if (!platformConfig.esDepuracion) return
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    operacion = Operacion.EnCurso(Operacion.Tipo.Crear),
+                    formulario = it.formulario.copy(estaGuardando = true)
+                )
+            }
+            val resultado = registrarProductoUseCase(
+                nombre = "Prueba Permisos 403",
+                precio = "99.90",
+                stock = "5",
+                activo = true
+            )
+            resultado.onSuccess { productoCreado ->
+                cargarProductos()
+                _uiState.update {
+                    it.copy(
+                        operacion = Operacion.Inactiva,
+                        formulario = it.formulario.copy(estaGuardando = false),
+                        mensajeExito = "Producto '${productoCreado.nombre}' registrado con éxito."
+                    )
+                }
+            }.onFailure { fallo ->
+                manejarFallo(fallo)
+            }
         }
     }
 

@@ -485,5 +485,136 @@ object AppIcons {
         verticalLineTo(4f)
         close()
     }.build()
+
+    val Lock: ImageVector = ImageVector.Builder(
+        name = "Lock",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).path(fill = SolidColor(Color.Black)) {
+        moveTo(18f, 8f)
+        horizontalLineTo(17f)
+        verticalLineTo(6f)
+        curveTo(17f, 3.24f, 14.76f, 1f, 12f, 1f)
+        curveTo(9.24f, 1f, 7f, 3.24f, 7f, 6f)
+        verticalLineTo(8f)
+        horizontalLineTo(6f)
+        curveTo(4.9f, 8f, 4f, 8.9f, 4f, 10f)
+        verticalLineTo(20f)
+        curveTo(4f, 21.1f, 4.9f, 22f, 6f, 22f)
+        horizontalLineTo(18f)
+        curveTo(19.1f, 22f, 20f, 21.1f, 20f, 20f)
+        verticalLineTo(10f)
+        curveTo(20f, 8.9f, 19.1f, 8f, 18f, 8f)
+        close()
+        moveTo(9f, 6f)
+        curveTo(9f, 4.34f, 10.34f, 3f, 12f, 3f)
+        curveTo(13.66f, 3f, 15f, 4.34f, 15f, 6f)
+        verticalLineTo(8f)
+        horizontalLineTo(9f)
+        verticalLineTo(6f)
+        close()
+        moveTo(18f, 20f)
+        horizontalLineTo(6f)
+        verticalLineTo(10f)
+        horizontalLineTo(18f)
+        verticalLineTo(20f)
+        close()
+        moveTo(12f, 17f)
+        curveTo(13.1f, 17f, 14f, 16.1f, 14f, 15f)
+        curveTo(14f, 13.9f, 13.1f, 13f, 12f, 13f)
+        curveTo(10.9f, 13f, 10f, 13.9f, 10f, 15f)
+        curveTo(10f, 16.1f, 10.9f, 17f, 12f, 17f)
+        close()
+    }.build()
+
+    val Logout: ImageVector = ImageVector.Builder(
+        name = "Logout",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).path(fill = SolidColor(Color.Black)) {
+        moveTo(17f, 7f)
+        lineTo(15.59f, 8.41f)
+        lineTo(17.17f, 10f)
+        horizontalLineTo(9f)
+        verticalLineTo(12f)
+        horizontalLineTo(17.17f)
+        lineTo(15.59f, 13.58f)
+        lineTo(17f, 15f)
+        lineTo(21f, 11f)
+        close()
+        moveTo(4f, 5f)
+        horizontalLineTo(12f)
+        verticalLineTo(3f)
+        horizontalLineTo(4f)
+        curveTo(2.9f, 3f, 2f, 3.9f, 2f, 5f)
+        verticalLineTo(19f)
+        curveTo(2f, 20.1f, 2.9f, 21f, 4f, 21f)
+        horizontalLineTo(12f)
+        verticalLineTo(19f)
+        horizontalLineTo(4f)
+        verticalLineTo(5f)
+        close()
+    }.build()
+
+    val Visibility: ImageVector = ImageVector.Builder(
+        name = "Visibility",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).path(fill = SolidColor(Color.Black)) {
+        moveTo(12f, 4.5f)
+        curveTo(7f, 4.5f, 2.73f, 7.61f, 1f, 12f)
+        curveTo(2.73f, 16.39f, 7f, 19.5f, 12f, 19.5f)
+        curveTo(17f, 19.5f, 21.27f, 16.39f, 23f, 12f)
+        curveTo(21.27f, 7.61f, 17f, 4.5f, 12f, 4.5f)
+        close()
+        moveTo(12f, 17f)
+        curveTo(9.24f, 17f, 7f, 14.76f, 7f, 12f)
+        curveTo(7f, 9.24f, 9.24f, 7f, 12f, 7f)
+        curveTo(14.76f, 7f, 17f, 9.24f, 17f, 12f)
+        curveTo(17f, 14.76f, 14.76f, 17f, 12f, 17f)
+        close()
+        moveTo(12f, 9f)
+        curveTo(10.34f, 9f, 9f, 10.34f, 9f, 12f)
+        curveTo(9f, 13.66f, 10.34f, 15f, 12f, 15f)
+        curveTo(13.66f, 15f, 15f, 13.66f, 15f, 12f)
+        curveTo(15f, 10.34f, 13.66f, 9f, 12f, 9f)
+        close()
+    }.build()
+
+    val VisibilityOff: ImageVector = ImageVector.Builder(
+        name = "VisibilityOff",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).path(fill = SolidColor(Color.Black)) {
+        moveTo(12f, 7f)
+        curveTo(13.66f, 7f, 15f, 8.34f, 15f, 10f)
+        curveTo(15f, 10.64f, 14.8f, 11.23f, 14.46f, 11.72f)
+        lineTo(17.82f, 15.08f)
+        curveTo(20.08f, 13.74f, 21.84f, 11.72f, 22.73f, 9.27f)
+        curveTo(21f, 4.88f, 16.73f, 1.77f, 11.73f, 1.77f)
+        curveTo(10.15f, 1.77f, 8.64f, 2.08f, 7.27f, 2.65f)
+        lineTo(9.55f, 4.93f)
+        curveTo(10.23f, 4.65f, 10.96f, 4.5f, 11.73f, 4.5f)
+        curveTo(14.49f, 4.5f, 16.73f, 6.74f, 16.73f, 9.5f)
+        close()
+        moveTo(2.71f, 3.16f)
+        lineTo(20.84f, 21.29f)
+        lineTo(19.43f, 22.7f)
+        lineTo(15.8f, 19.07f)
+        curveTo(14.54f, 19.66f, 13.16f, 20f, 11.73f, 20f)
+        curveTo(6.73f, 20f, 2.46f, 16.89f, 0.73f, 12.5f)
+        curveTo(1.68f, 10.09f, 3.42f, 8.08f, 5.66f, 6.74f)
+        lineTo(1.3f, 2.38f)
+        close()
+    }.build()
 }
+
 

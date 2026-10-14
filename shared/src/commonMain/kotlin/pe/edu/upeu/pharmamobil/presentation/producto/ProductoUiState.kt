@@ -64,5 +64,7 @@ data class ProductoUiState(
     val mensajeExito: String? = null,
     val totalActivos: Int = 0,
     val totalInactivos: Int = 0,
-    val totalBajoStock: Int = 0
+    val totalBajoStock: Int = 0,
+    val esDepuracion: Boolean = false
 )
+
