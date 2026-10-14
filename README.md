@@ -100,3 +100,41 @@ El proyecto implementa un desacoplamiento estricto entre la lógica multiplatafo
 - `commonMain` permanece 100% puro, sin dependencias ni imports de `android.*`, `java.*` o `platform.*`.
 - El compilador de Kotlin Multiplatform garantiza en tiempo de compilación (`compileAndroidMain` / `compileIosMain`) la existencia de las declaraciones `actual` correspondientes para cada declaración `expect`.
 
+---
+
+## Sesión 10: Autenticación JWT, Almacenamiento Seguro y Control de Roles (RBAC)
+
+### 1. Arquitectura de Seguridad y Flujo de Sesión
+La autenticación se implementa mediante tokens **JSON Web Tokens (JWT)** contra el backend PharmaSoft (Spring Boot 3.3.4):
+- **Endpoint de Login:** `POST /api/v1/auth/login` con payload `{ "username": "...", "password": "..." }`.
+- **Endpoint de Perfil:** `GET /api/v1/auth/me` con header `Authorization: Bearer <token>`, mapeando los permisos y datos del empleado activo.
+- **Ktor Client Auth Plugin:** Configurado con `bearer { loadTokens { ... } sendWithoutRequest { ... } }`, inyectando automáticamente el encabezado Bearer en todas las rutas protegidas.
+- **Manejo Global de 401 (Sesión Expirada):** Un `HttpResponseValidator` centralizado en `HttpClientFactory` intercepta cualquier respuesta HTTP 401 en llamadas protegidas, borra el token persistido del almacén seguro y transiciona el `SessionCoordinator` a `SesionEstado.Expirado`, forzando la redirección al Login sin estados inconsistentes.
+- **Saneamiento de Registros (Logging):** En compilaciones de depuración (`BuildConfig.DEBUG`), los encabezados `Authorization` son saneados automáticamente mediante `sanitizeHeader { it == HttpHeaders.Authorization }`, evitando la exposición de tokens en Logcat. Fuera de depuración, el nivel de registro se desactiva a `LogLevel.NONE`.
+
+### 2. Almacenamiento Seguro de Credenciales por Plataforma
+La interfaz `AlmacenSeguro` desacopla la persistencia segura mediante Inyección de Dependencias (Koin):
+- **Android (`AlmacenSeguroAndroid`):** Utiliza `EncryptedSharedPreferences` de `androidx.security:security-crypto`, cifrando las claves con `AES256_SIV` y los valores con `AES256_GCM` mediante una `MasterKey` respaldada por Android Keystore.
+- **iOS (`AlmacenSeguroIos`):** Utiliza la API nativa de **Keychain Services** de iOS (`kSecClassGenericPassword`), con nivel de protección `kSecAttrAccessibleAfterFirstUnlock`.
+
+### 3. Usuarios de Prueba y Matriz de Control de Acceso (RBAC)
+
+| Usuario | Contraseña | Rol Principal | Permisos Clave | Módulos Visibles en UI | Acciones en Catálogo |
+|---|---|---|---|---|---|
+| `admin` | `Admin123` | `ROLE_ADMIN` | `CATALOGO_LEER`, `CATALOGO_ESCRIBIR`, `CLIENTES_LEER`, `CLIENTES_ESCRIBIR`, `PEDIDOS_LEER`, `PEDIDOS_ESCRIBIR` | Inicio, Inventario, Clientes, Pedidos | Lectura, Crear, Editar, Eliminar |
+| `vendedor` | `Vendedor123` | `ROLE_VENDEDOR` | `CATALOGO_LEER`, `CLIENTES_LEER`, `CLIENTES_ESCRIBIR`, `PEDIDOS_LEER`, `PEDIDOS_ESCRIBIR` | Inicio, Inventario, Clientes, Pedidos | **Solo Lectura** (Botón Nuevo, Editar y Eliminar ocultos) |
+| `almacen` | `Almacen123` | `ROLE_ALMACEN` | `CATALOGO_LEER`, `CATALOGO_ESCRIBIR`, `PEDIDOS_LEER` | Inicio, Inventario, Pedidos (**Clientes Oculto**) | Lectura, Crear, Editar, Eliminar |
+
+> **Nota de Seguridad de Laboratorio:** La pantalla de Login dispone de selectores rápidos (chips) que únicamente autocompletan el nombre de usuario de prueba. Por directriz de seguridad estricta, ninguna contraseña está incrustada en el código fuente ni en la interfaz gráfica.
+
+### 4. Comandos de Verificación y Compilación
+- **Ejecutar Pruebas Unitarias (Lógica Común, RBAC y MockEngine):**
+  ```bash
+  .\gradlew.bat :shared:testAndroidHostTest
+  ```
+- **Compilar APK Android Debug:**
+  ```bash
+  .\gradlew.bat :androidApp:assembleDebug
+  ```
+
+
