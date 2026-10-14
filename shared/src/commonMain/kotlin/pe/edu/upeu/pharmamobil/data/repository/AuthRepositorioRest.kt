@@ -2,6 +2,7 @@ package pe.edu.upeu.pharmamobil.data.repository
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ServerResponseException
@@ -9,7 +10,9 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
+import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.SerializationException
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
 import pe.edu.upeu.pharmamobil.data.remote.dto.LoginRequestDto
 import pe.edu.upeu.pharmamobil.data.remote.dto.LoginResponseDto
@@ -48,8 +51,12 @@ class AuthRepositorioRest(
             throw ErrorSesionException(ErrorSesion.ErrorDesconocido("Error interno del servidor"))
         } catch (e: HttpRequestTimeoutException) {
             throw ErrorSesionException(ErrorSesion.SinConexion)
-        } catch (e: Exception) {
+        } catch (e: ConnectTimeoutException) {
             throw ErrorSesionException(ErrorSesion.SinConexion)
+        } catch (e: IOException) {
+            throw ErrorSesionException(ErrorSesion.SinConexion)
+        } catch (e: Exception) {
+            throw ErrorSesionException(ErrorSesion.ErrorDesconocido(e.message ?: "Error al autenticar"))
         }
 
         // 1. Guardar token en el almacén seguro cifrado
@@ -61,13 +68,42 @@ class AuthRepositorioRest(
         // 3. Consultar /auth/me para reconstruir el perfil con nombre y permisos
         val meResponse: UsuarioResponseDto = try {
             cliente.get("auth/me").body()
+        } catch (c: CancellationException) {
+            throw c
+        } catch (e: ClientRequestException) {
+            almacen.borrarToken()
+            cliente.limpiarTokenAuth()
+            if (e.response.status == HttpStatusCode.Unauthorized) {
+                throw ErrorSesionException(ErrorSesion.SesionExpirada)
+            } else if (e.response.status == HttpStatusCode.Forbidden) {
+                throw ErrorSesionException(ErrorSesion.SinPermiso)
+            } else {
+                throw ErrorSesionException(ErrorSesion.ErrorDesconocido("Error HTTP ${e.response.status.value} al consultar perfil"))
+            }
+        } catch (e: ServerResponseException) {
+            almacen.borrarToken()
+            cliente.limpiarTokenAuth()
+            throw ErrorSesionException(ErrorSesion.ErrorDesconocido("Error interno del servidor al consultar perfil"))
+        } catch (e: HttpRequestTimeoutException) {
+            almacen.borrarToken()
+            cliente.limpiarTokenAuth()
+            throw ErrorSesionException(ErrorSesion.SinConexion)
+        } catch (e: ConnectTimeoutException) {
+            almacen.borrarToken()
+            cliente.limpiarTokenAuth()
+            throw ErrorSesionException(ErrorSesion.SinConexion)
+        } catch (e: IOException) {
+            almacen.borrarToken()
+            cliente.limpiarTokenAuth()
+            throw ErrorSesionException(ErrorSesion.SinConexion)
+        } catch (e: SerializationException) {
+            almacen.borrarToken()
+            cliente.limpiarTokenAuth()
+            throw ErrorSesionException(ErrorSesion.ErrorDesconocido("Error de serialización al procesar perfil"))
         } catch (e: Exception) {
-            UsuarioResponseDto(
-                username = loginResponse.username.ifEmpty { credenciales.usuario.trim() },
-                empleadoNombre = loginResponse.nombreCompleto.ifEmpty { loginResponse.username },
-                roles = loginResponse.roles,
-                permisos = loginResponse.permisos
-            )
+            almacen.borrarToken()
+            cliente.limpiarTokenAuth()
+            throw ErrorSesionException(ErrorSesion.ErrorDesconocido(e.message ?: "Error desconocido al procesar perfil"))
         }
 
         val nombreFinal = meResponse.empleadoNombre ?: loginResponse.nombreCompleto.ifEmpty { meResponse.username }
@@ -96,11 +132,21 @@ class AuthRepositorioRest(
                 nombreCompleto = nombreFinal,
                 permisos = me.permisos.toSet()
             )
+        } catch (c: CancellationException) {
+            throw c
         } catch (e: ClientRequestException) {
-            if (e.response.status == HttpStatusCode.Unauthorized) {
+            if (e.response.status == HttpStatusCode.Unauthorized || e.response.status == HttpStatusCode.Forbidden) {
                 almacen.borrarToken()
                 cliente.limpiarTokenAuth()
             }
+            null
+        } catch (e: HttpRequestTimeoutException) {
+            null
+        } catch (e: ConnectTimeoutException) {
+            null
+        } catch (e: IOException) {
+            null
+        } catch (e: ServerResponseException) {
             null
         } catch (e: Exception) {
             null

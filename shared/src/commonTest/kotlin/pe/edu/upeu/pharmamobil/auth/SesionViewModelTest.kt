@@ -167,4 +167,31 @@ class SesionViewModelTest {
         val estadoFinal = coordinator.estadoSesion.value
         assertTrue(estadoFinal is SesionEstado.Expirado, "No debe reemplazar Expirado por NoAutenticado")
     }
+
+    @Test
+    fun sesionViewModel_iniciarSesionFallaEnAuthMe_mantieneSesionNoValidaYReflejaError() = runTest {
+        val repo = FakeAuthRepository(
+            excepcionLogin = ErrorSesionException(ErrorSesion.SesionExpirada)
+        )
+        val coordinator = SessionCoordinator()
+        val viewModel = SesionViewModel(
+            iniciarSesionUseCase = IniciarSesionUseCase(repo),
+            cerrarSesionUseCase = CerrarSesionUseCase(repo),
+            sesionGuardadaUseCase = SesionGuardadaUseCase(repo),
+            sessionCoordinator = coordinator
+        )
+
+        advanceUntilIdle()
+
+        viewModel.onUsuarioChanged("admin")
+        viewModel.onContraseniaChanged("Admin123")
+        viewModel.iniciarSesion()
+
+        advanceUntilIdle()
+
+        assertFalse(coordinator.estadoSesion.value is SesionEstado.Autenticado, "El estado no debe ser Autenticado")
+        assertFalse(viewModel.uiState.value.cargando, "El estado cargando debe ser falso")
+        assertNotNull(viewModel.uiState.value.mensajeError, "Debe existir un mensaje de error visible")
+    }
 }
+

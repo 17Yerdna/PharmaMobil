@@ -35,6 +35,9 @@ data class UsuarioResponseDto(
     val estado: Boolean = true,
     val empleadoId: Long? = null,
     val empleadoNombre: String? = null,
+    val cargo: String? = null,
     val roles: List<String> = emptyList(),
-    val permisos: List<String> = emptyList()
+    val permisos: List<String> = emptyList(),
+    val fechaCreacion: String? = null
 )
+
