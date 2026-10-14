@@ -4,6 +4,8 @@ import android.content.pm.ApplicationInfo
 import org.koin.android.ext.koin.androidContext
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
+import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
+import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguroAndroid
 import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
 import pe.edu.upeu.pharmamobil.platform.CompartidorAndroid
 import pe.edu.upeu.pharmamobil.platform.PlatformConfig
@@ -16,6 +18,7 @@ import org.koin.dsl.module
 actual val platformModule: Module = module {
     single<HttpClientEngine> { OkHttp.create() }
     single<Compartidor> { CompartidorAndroid(androidContext()) }
+    single<AlmacenSeguro> { AlmacenSeguroAndroid(androidContext()) }
     single<PlatformConfig> {
         val contexto = androidContext()
         val esDebug = (contexto.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0

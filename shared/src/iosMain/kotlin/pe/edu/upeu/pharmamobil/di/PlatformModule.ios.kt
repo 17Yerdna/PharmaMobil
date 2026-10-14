@@ -2,6 +2,8 @@ package pe.edu.upeu.pharmamobil.di
 
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.darwin.Darwin
+import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
+import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguroIos
 import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
 import pe.edu.upeu.pharmamobil.platform.CompartidorIos
 import pe.edu.upeu.pharmamobil.platform.PlatformConfig
@@ -15,6 +17,7 @@ import org.koin.dsl.module
 actual val platformModule: Module = module {
     single<HttpClientEngine> { Darwin.create() }
     single<Compartidor> { CompartidorIos() }
+    single<AlmacenSeguro> { AlmacenSeguroIos() }
     single<PlatformConfig> {
         PlatformConfig(
             urlBase = "http://localhost:8080/api/v1/",

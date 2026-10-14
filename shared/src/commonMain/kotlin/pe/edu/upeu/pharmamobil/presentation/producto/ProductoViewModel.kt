@@ -329,6 +329,8 @@ class ProductoViewModel(
         is ErrorApi.SinConexion -> "Sin conexión a internet. Verifique su red."
         is ErrorApi.TiempoAgotado -> "Tiempo de espera agotado al conectar con el servidor."
         is ErrorApi.Validacion -> "Revise los campos con errores en el formulario."
+        is ErrorApi.NoAutorizado -> "Sesión no válida o expirada (401)."
+        is ErrorApi.SinPermiso -> "No cuenta con permisos para realizar esta acción (403)."
         null -> fallo.message ?: "Ocurrió un error inesperado al procesar la solicitud."
     }
 
