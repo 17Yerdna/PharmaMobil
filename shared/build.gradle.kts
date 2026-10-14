@@ -46,6 +46,7 @@ kotlin {
             implementation(libs.compose.uiTooling)
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.security.crypto)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -62,6 +63,7 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.auth)
             implementation(libs.ktor.client.logging)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
@@ -71,6 +73,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.ktor.client.mock)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
         }
     }
