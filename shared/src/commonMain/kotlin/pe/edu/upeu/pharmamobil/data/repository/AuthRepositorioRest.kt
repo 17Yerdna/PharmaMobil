@@ -59,7 +59,7 @@ class AuthRepositorioRest(
             throw ErrorSesionException(ErrorSesion.ErrorDesconocido(e.message ?: "Error al autenticar"))
         }
 
-        // 1. Guardar token en el almacén seguro cifrado
+        // 1. Guardar token en el almacén seguro
         almacen.guardarToken(loginResponse.token)
 
         // 2. Limpiar caché del proveedor Bearer para que tome el token guardado
