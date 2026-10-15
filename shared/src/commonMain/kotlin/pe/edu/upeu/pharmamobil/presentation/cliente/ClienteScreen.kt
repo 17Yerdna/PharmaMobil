@@ -1,274 +1,319 @@
 package pe.edu.upeu.pharmamobil.presentation.cliente
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
-import pe.edu.upeu.pharmamobil.presentation.components.MensajeExito
-import pe.edu.upeu.pharmamobil.presentation.components.ValidatedTextField
+import androidx.compose.ui.unit.sp
+import pe.edu.upeu.pharmamobil.domain.model.Cliente
+import pe.edu.upeu.pharmamobil.presentation.theme.*
 
 @Composable
 fun ClienteScreen(
-    viewModel: ClienteViewModel,
     modifier: Modifier = Modifier
 ) {
+    val scrollState = rememberScrollState()
+    var busqueda by remember { mutableStateOf("") }
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val listaClientes = remember {
+        listOf(
+            Cliente(1L, "Botica San Jerónimo", "contacto@sanjeronimo.pe", "987654321"),
+            Cliente(2L, "Farmacia Central UPeU", "farmacia@upeu.edu.pe", "951234567"),
+            Cliente(3L, "Policlínico Los Ángeles", "compras@losangeles.com", "912345678"),
+            Cliente(4L, "Droguería Santa María", "ventas@santamaria.pe", null)
+        )
+    }
+
+    val clientesFiltrados = remember(busqueda) {
+        if (busqueda.isBlank()) listaClientes
+        else listaClientes.filter {
+            it.nombre.contains(busqueda, ignoreCase = true) ||
+            it.correo.contains(busqueda, ignoreCase = true)
+        }
+    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-
-        FormularioClienteCard(
-            formulario = uiState.formulario,
-            registrando = uiState.registrando,
-            onNombreChange = viewModel::onNombreChange,
-            onCorreoChange = viewModel::onCorreoChange,
-            onTelefonoChange = viewModel::onTelefonoChange,
-            onRegistrar = viewModel::registrar
-        )
-
-        uiState.mensajeExito?.let {
-            MensajeExito(it)
-        }
-
-        EncabezadoCartera(uiState.fase)
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-
-            when (val fase = uiState.fase) {
-
-                ClienteUiState.Fase.Cargando ->
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                        CircularProgressIndicator()
-
-                        Text(
-                            text = "Cargando clientes…",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                ClienteUiState.Fase.SinClientes ->
-                    EstadoVacio(
-                        icono = Icons.Default.Group,
-                        titulo = "Todavía no hay clientes",
-                        descripcion = "Registra el primero con el formulario de arriba.",
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-
-                is ClienteUiState.Fase.ConClientes ->
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(
-                            items = fase.clientes,
-                            key = { it.id }
-                        ) { cliente ->
-                            ClienteItem(cliente)
-                        }
-                    }
-
-                is ClienteUiState.Fase.Error ->
-                    EstadoVacio(
-                        icono = Icons.Default.CloudOff,
-                        titulo = "No pudimos cargar los clientes",
-                        descripcion = fase.mensaje,
-                        colorIcono = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center),
-                        accion = {
-                            FilledTonalButton(onClick = viewModel::cargarClientes) {
-                                Text("Reintentar")
-                            }
-                        }
-                    )
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun FormularioClienteCard(
-    formulario: FormularioCliente,
-    registrando: Boolean,
-    onNombreChange: (String) -> Unit,
-    onCorreoChange: (String) -> Unit,
-    onTelefonoChange: (String) -> Unit,
-    onRegistrar: () -> Unit
-) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-
-            Text(
-                text = "Registrar cliente",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            ValidatedTextField(
-                value = formulario.nombre,
-                onValueChange = onNombreChange,
-                label = "Nombre",
-                error = formulario.nombreError,
-                leadingIcon = Icons.Default.Person,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            ValidatedTextField(
-                value = formulario.correo,
-                onValueChange = onCorreoChange,
-                label = "Correo",
-                error = formulario.correoError,
-                leadingIcon = Icons.Default.Email,
-                keyboardType = KeyboardType.Email,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            ValidatedTextField(
-                value = formulario.telefono,
-                onValueChange = onTelefonoChange,
-                label = "Teléfono",
-                error = formulario.telefonoError,
-                leadingIcon = Icons.Default.Phone,
-                ayuda = "Opcional, entre 6 y 9 dígitos",
-                keyboardType = KeyboardType.Phone,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Button(
-                onClick = onRegistrar,
-                enabled = !registrando,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (registrando) "Registrando…" else "Registrar")
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun EncabezadoCartera(
-    fase: ClienteUiState.Fase
-) {
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Text(
-            text = "Cartera",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f)
-        )
-
-        if (fase is ClienteUiState.Fase.ConClientes) {
-
-            val cantidad = fase.clientes.size
-
-            Text(
-                text = if (cantidad == 1) "1 cliente" else "$cantidad clientes",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-
-@Composable
-private fun ClienteItem(
-    cliente: ClienteUi
-) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
+        // ==========================================
+        // HEADER DEL DIRECTORIO
+        // ==========================================
         Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ) {
-
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(20.dp)
-                )
-            }
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
+            Column {
                 Text(
-                    text = cliente.nombre,
-                    style = MaterialTheme.typography.titleSmall
+                    text = "Directorio de Clientes",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-
                 Text(
-                    text = "${cliente.correo}  ·  ${cliente.telefono}",
+                    text = "${listaClientes.size} instituciones registradas",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Text(
+                    text = "Activos",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ==========================================
+        // BARRA DE BÚSQUEDA
+        // ==========================================
+        OutlinedTextField(
+            value = busqueda,
+            onValueChange = { busqueda = it },
+            placeholder = { Text("Buscar por farmacia, clínica o correo...", style = MaterialTheme.typography.bodySmall) },
+            leadingIcon = {
+                Icon(
+                    imageVector = AppIcons.Search,
+                    contentDescription = "Buscar",
+                    tint = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            trailingIcon = {
+                if (busqueda.isNotBlank()) {
+                    IconButton(onClick = { busqueda = "" }) {
+                        Icon(
+                            imageVector = AppIcons.Close,
+                            contentDescription = "Limpiar búsqueda",
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // ==========================================
+        // LISTADO DE TARJETAS
+        // ==========================================
+        if (clientesFiltrados.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = AppIcons.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "No se encontraron clientes coincidentes",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        } else {
+            clientesFiltrados.forEach { cliente ->
+                ClienteItemCard(cliente = cliente)
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun ClienteItemCard(
+    cliente: Cliente,
+    modifier: Modifier = Modifier
+) {
+    // Generar color de avatar según el ID
+    val avatarBg = when (cliente.id % 4) {
+        1L -> PrimaryContainerLight
+        2L -> SecondaryContainerLight
+        3L -> TertiaryContainerLight
+        else -> SemanticWarningContainerLight
+    }
+    val avatarTextColor = when (cliente.id % 4) {
+        1L -> PrimaryLight
+        2L -> SecondaryLight
+        3L -> TertiaryLight
+        else -> OnSemanticWarningLight
+    }
+    val iniciales = remember(cliente.nombre) {
+        cliente.nombre.split(" ")
+            .take(2)
+            .mapNotNull { it.firstOrNull()?.toString() }
+            .joinToString("")
+            .uppercase()
+    }
+
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(18.dp)
+            )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        shape = CircleShape,
+                        color = avatarBg,
+                        modifier = Modifier.size(42.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = iniciales,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 14.sp,
+                                color = avatarTextColor
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = cliente.nombre,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Cliente Institucional",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(
+                        text = "ID: #${cliente.id}",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Información de contacto en píldoras
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Email Chip
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Email,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = cliente.correo,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
+
+                // Phone Chip
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.Phone,
+                            contentDescription = null,
+                            tint = if (cliente.telefono != null) SemanticSuccess else MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = cliente.obtenerTelefono(),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (cliente.telefono != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
             }
         }
     }
