@@ -115,7 +115,7 @@ La autenticación se implementa mediante tokens **JSON Web Tokens (JWT)** contra
 ### 2. Almacenamiento Seguro de Credenciales por Plataforma
 La interfaz `AlmacenSeguro` desacopla la persistencia segura mediante Inyección de Dependencias (Koin):
 - **Android (`AlmacenSeguroAndroid`):** Utiliza `EncryptedSharedPreferences` de `androidx.security:security-crypto`, cifrando las claves con `AES256_SIV` y los valores con `AES256_GCM` mediante una `MasterKey` respaldada por Android Keystore.
-- **iOS (`AlmacenSeguroIos`):** Utiliza la API nativa de **Keychain Services** de iOS (`kSecClassGenericPassword`), con nivel de protección `kSecAttrAccessibleAfterFirstUnlock`.
+- **iOS (`AlmacenSeguroIos`):** Para el entorno de desarrollo en Windows cuenta con un adaptador en memoria; el diseño arquitectónico previsto para compilación nativa en macOS contempla la API nativa de **Keychain Services** de iOS (`kSecClassGenericPassword`) con nivel de protección `kSecAttrAccessibleAfterFirstUnlock`.
 
 ### 3. Usuarios de Prueba y Matriz de Control de Acceso (RBAC)
 
