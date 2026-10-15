@@ -7,6 +7,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import kotlinx.coroutines.Job
+import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
 import pe.edu.upeu.pharmamobil.domain.error.ErrorSesion
 import pe.edu.upeu.pharmamobil.domain.error.ErrorSesionException
 import pe.edu.upeu.pharmamobil.domain.model.Credenciales
@@ -23,7 +27,9 @@ class SesionViewModel(
     private val iniciarSesionUseCase: IniciarSesionUseCase,
     private val cerrarSesionUseCase: CerrarSesionUseCase,
     private val sesionGuardadaUseCase: SesionGuardadaUseCase,
-    private val sessionCoordinator: SessionCoordinator
+    private val sessionCoordinator: SessionCoordinator,
+    private val almacenSeguro: AlmacenSeguro? = null,
+    private val httpClient: HttpClient? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SesionUiState())
@@ -124,18 +130,56 @@ class SesionViewModel(
 
     /**
      * Cierra la sesión activa eliminando tokens y notificando al coordinador.
+     * Limpia completamente los campos de usuario y contraseña para cumplir con el Efecto 3 de logout.
      */
-    fun cerrarSesion() {
+    fun cerrarSesion(): Job = viewModelScope.launch {
+        _uiState.update { it.copy(cargando = true) }
+        cerrarSesionUseCase()
+        sessionCoordinator.notificarSesionCerrada()
+        _uiState.update {
+            it.copy(
+                cargando = false,
+                usuario = "",
+                contrasenia = "",
+                mensajeError = null
+            )
+        }
+    }
+
+    /**
+     * Utilidad exclusiva de depuración (Escenario E3):
+     * Muta de forma controlada la firma criptográfica del JWT almacenado y dispara una petición
+     * autenticada para validar que el backend rechaza con 401 y la app redirige a Login.
+     */
+    fun corromperTokenParaPruebaDebug() {
+        val tokenActual = almacenSeguro?.leerToken() ?: return
+        val tokenCorrupto = if (tokenActual.endsWith("x")) tokenActual.dropLast(1) + "y" else tokenActual.dropLast(1) + "x"
+        almacenSeguro.guardarToken(tokenCorrupto)
         viewModelScope.launch {
-            _uiState.update { it.copy(cargando = true) }
-            cerrarSesionUseCase()
-            sessionCoordinator.notificarSesionCerrada()
-            _uiState.update {
-                it.copy(
-                    cargando = false,
-                    contrasenia = "",
-                    mensajeError = null
-                )
+            try {
+                httpClient?.get("/api/v1/auth/me")
+            } catch (_: Exception) {
+                // El 401 es capturado por HttpResponseValidator en HttpClientFactory
+            }
+        }
+    }
+
+    /**
+     * Utilidad exclusiva de depuración (Efecto 2 de Logout):
+     * Aguarda explícitamente a que culmine cerrarSesion() antes de disparar una petición de prueba,
+     * garantizando que viaje sin Authorization y reciba 401 sin condiciones de carrera.
+     */
+    fun probarPeticionSinTokenPostLogout(onResultado: (Int) -> Unit = {}) {
+        viewModelScope.launch {
+            val job = cerrarSesion()
+            job.join()
+            try {
+                val respuesta = httpClient?.get("/api/v1/productos")
+                if (respuesta != null) {
+                    onResultado(respuesta.status.value)
+                }
+            } catch (_: Exception) {
+                onResultado(401)
             }
         }
     }

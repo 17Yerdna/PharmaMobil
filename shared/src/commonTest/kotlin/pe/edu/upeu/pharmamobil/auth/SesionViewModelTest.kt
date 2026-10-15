@@ -140,11 +140,16 @@ class SesionViewModelTest {
         advanceUntilIdle()
         assertTrue(coordinator.estadoSesion.value is SesionEstado.Autenticado)
 
+        viewModel.onUsuarioChanged("vendedor")
+        viewModel.onContraseniaChanged("Vendedor123")
+
         viewModel.cerrarSesion()
         advanceUntilIdle()
 
         assertTrue(coordinator.estadoSesion.value is SesionEstado.NoAutenticado)
         assertTrue(repo.logoutEjecutado)
+        assertTrue(viewModel.uiState.value.usuario.isEmpty(), "El campo usuario debe quedar vacío tras logout")
+        assertTrue(viewModel.uiState.value.contrasenia.isEmpty(), "El campo contraseña debe quedar vacío tras logout")
     }
 
     @Test
