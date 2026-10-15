@@ -54,42 +54,28 @@ class ProductoRepositorioRest(
         val resultado = ejecutarLlamada {
             api.crear(producto.toRequest(categoriaPorDefecto)).toDomain()
         }
-        return if (resultado.isSuccess) {
-            val creado = resultado.getOrThrow()
-            productosLocales.add(0, creado)
-            creado
-        } else {
-            val nuevoId = if (producto.id > 0L) producto.id else (1000L..9999L).random()
-            val nuevo = producto.copy(id = nuevoId)
-            productosLocales.add(0, nuevo)
-            nuevo
-        }
+        val creado = resultado.getOrThrow()
+        productosLocales.add(0, creado)
+        return creado
     }
 
     override suspend fun actualizar(producto: Producto): Producto {
         val resultado = ejecutarLlamada {
             api.actualizar(producto.id, producto.toRequest(categoriaPorDefecto)).toDomain()
         }
-        return if (resultado.isSuccess) {
-            val actualizado = resultado.getOrThrow()
-            val index = productosLocales.indexOfFirst { it.id == producto.id }
-            if (index != -1) {
-                productosLocales[index] = actualizado
-            }
-            actualizado
-        } else {
-            val index = productosLocales.indexOfFirst { it.id == producto.id }
-            if (index != -1) {
-                productosLocales[index] = producto
-            }
-            producto
+        val actualizado = resultado.getOrThrow()
+        val index = productosLocales.indexOfFirst { it.id == producto.id }
+        if (index != -1) {
+            productosLocales[index] = actualizado
         }
+        return actualizado
     }
 
     override suspend fun eliminar(id: Long) {
         val resultado = ejecutarLlamada {
             api.eliminar(id)
         }
+        resultado.getOrThrow()
         productosLocales.removeAll { it.id == id }
     }
 }
