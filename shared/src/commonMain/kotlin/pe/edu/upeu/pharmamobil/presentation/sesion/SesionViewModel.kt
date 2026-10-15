@@ -19,6 +19,7 @@ import pe.edu.upeu.pharmamobil.domain.session.SessionCoordinator
 import pe.edu.upeu.pharmamobil.domain.usecase.CerrarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.IniciarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.SesionGuardadaUseCase
+import pe.edu.upeu.pharmamobil.platform.PlatformConfig
 
 /**
  * ViewModel que gestiona el ciclo de vida del formulario de Login y la restauración de sesión.
@@ -29,8 +30,12 @@ class SesionViewModel(
     private val sesionGuardadaUseCase: SesionGuardadaUseCase,
     private val sessionCoordinator: SessionCoordinator,
     private val almacenSeguro: AlmacenSeguro? = null,
-    private val httpClient: HttpClient? = null
+    private val httpClient: HttpClient? = null,
+    private val platformConfig: PlatformConfig? = null
 ) : ViewModel() {
+
+    val esDepuracion: Boolean
+        get() = platformConfig?.esDepuracion ?: false
 
     private val _uiState = MutableStateFlow(SesionUiState())
     val uiState: StateFlow<SesionUiState> = _uiState.asStateFlow()
@@ -150,8 +155,10 @@ class SesionViewModel(
      * Utilidad exclusiva de depuración (Escenario E3):
      * Muta de forma controlada la firma criptográfica del JWT almacenado y dispara una petición
      * autenticada para validar que el backend rechaza con 401 y la app redirige a Login.
+     * Solo opera cuando [esDepuracion] es true; en release retorna de inmediato sin efecto alguno.
      */
     fun corromperTokenParaPruebaDebug() {
+        if (!esDepuracion) return
         val tokenActual = almacenSeguro?.leerToken() ?: return
         val tokenCorrupto = if (tokenActual.endsWith("x")) tokenActual.dropLast(1) + "y" else tokenActual.dropLast(1) + "x"
         almacenSeguro.guardarToken(tokenCorrupto)
@@ -168,8 +175,10 @@ class SesionViewModel(
      * Utilidad exclusiva de depuración (Efecto 2 de Logout):
      * Aguarda explícitamente a que culmine cerrarSesion() antes de disparar una petición de prueba,
      * garantizando que viaje sin Authorization y reciba 401 sin condiciones de carrera.
+     * Solo opera cuando [esDepuracion] es true; en release retorna de inmediato sin efecto alguno.
      */
     fun probarPeticionSinTokenPostLogout(onResultado: (Int) -> Unit = {}) {
+        if (!esDepuracion) return
         viewModelScope.launch {
             val job = cerrarSesion()
             job.join()

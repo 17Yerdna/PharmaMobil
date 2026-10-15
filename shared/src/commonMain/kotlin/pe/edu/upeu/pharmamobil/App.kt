@@ -522,6 +522,64 @@ fun App() {
                                             },
                                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                         )
+
+                                        // Acciones de Diagnóstico en Depuración (Escenario E3 y Efecto 2)
+                                        if (sesionViewModel.esDepuracion) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                            )
+                                            Text(
+                                                text = "DIAGNÓSTICO (DEBUG S10)",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                                            )
+                                            NavigationDrawerItem(
+                                                icon = {
+                                                    Icon(
+                                                        imageVector = AppIcons.Warning,
+                                                        contentDescription = "Simular Token Alterado",
+                                                        tint = MaterialTheme.colorScheme.error
+                                                    )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        text = "Simular Token Alterado (E3)",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.error
+                                                    )
+                                                },
+                                                selected = false,
+                                                onClick = {
+                                                    scope.launch { drawerState.close() }
+                                                    sesionViewModel.corromperTokenParaPruebaDebug()
+                                                },
+                                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                            )
+                                            NavigationDrawerItem(
+                                                icon = {
+                                                    Icon(
+                                                        imageVector = AppIcons.Logout,
+                                                        contentDescription = "Logout y Probar 401",
+                                                        tint = MaterialTheme.colorScheme.outline
+                                                    )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        text = "Logout + Probar 401 (Efecto 2)",
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                },
+                                                selected = false,
+                                                onClick = {
+                                                    scope.launch { drawerState.close() }
+                                                    sesionViewModel.probarPeticionSinTokenPostLogout()
+                                                },
+                                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                            )
+                                        }
                                         Spacer(modifier = Modifier.height(16.dp))
                                     }
                                 }

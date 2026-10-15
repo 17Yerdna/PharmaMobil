@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
 import pe.edu.upeu.pharmamobil.domain.error.ErrorSesion
 import pe.edu.upeu.pharmamobil.domain.error.ErrorSesionException
 import pe.edu.upeu.pharmamobil.domain.model.Credenciales
@@ -17,6 +18,7 @@ import pe.edu.upeu.pharmamobil.domain.session.SessionCoordinator
 import pe.edu.upeu.pharmamobil.domain.usecase.CerrarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.IniciarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.SesionGuardadaUseCase
+import pe.edu.upeu.pharmamobil.platform.PlatformConfig
 import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -49,6 +51,12 @@ class SesionViewModelTest {
         }
 
         override suspend fun sesionGuardada(): Sesion? = sesionGuardadaRetorno
+    }
+
+    private class FakeAlmacenSeguro(var tokenAlmacenado: String? = null) : AlmacenSeguro {
+        override fun guardarToken(token: String) { tokenAlmacenado = token }
+        override fun leerToken(): String? = tokenAlmacenado
+        override fun borrarToken() { tokenAlmacenado = null }
     }
 
     @BeforeTest
@@ -198,5 +206,52 @@ class SesionViewModelTest {
         assertFalse(viewModel.uiState.value.cargando, "El estado cargando debe ser falso")
         assertNotNull(viewModel.uiState.value.mensajeError, "Debe existir un mensaje de error visible")
     }
+
+    @Test
+    fun corromperTokenParaPruebaDebug_enModoRelease_noModificaToken() = runTest {
+        val repo = FakeAuthRepository()
+        val coordinator = SessionCoordinator()
+        val almacen = FakeAlmacenSeguro(tokenAlmacenado = "jwt.token.valido.sig123x")
+        val configRelease = PlatformConfig(urlBase = "http://localhost:8080/api/v1/", esDepuracion = false)
+
+        val viewModel = SesionViewModel(
+            iniciarSesionUseCase = IniciarSesionUseCase(repo),
+            cerrarSesionUseCase = CerrarSesionUseCase(repo),
+            sesionGuardadaUseCase = SesionGuardadaUseCase(repo),
+            sessionCoordinator = coordinator,
+            almacenSeguro = almacen,
+            platformConfig = configRelease
+        )
+
+        assertFalse(viewModel.esDepuracion, "esDepuracion debe ser false en release")
+        viewModel.corromperTokenParaPruebaDebug()
+        advanceUntilIdle()
+
+        assertEquals("jwt.token.valido.sig123x", almacen.leerToken(), "El token no debe mutar en release")
+    }
+
+    @Test
+    fun corromperTokenParaPruebaDebug_enModoDebug_mutaFirmaDeToken() = runTest {
+        val repo = FakeAuthRepository()
+        val coordinator = SessionCoordinator()
+        val almacen = FakeAlmacenSeguro(tokenAlmacenado = "jwt.token.valido.sig123x")
+        val configDebug = PlatformConfig(urlBase = "http://localhost:8080/api/v1/", esDepuracion = true)
+
+        val viewModel = SesionViewModel(
+            iniciarSesionUseCase = IniciarSesionUseCase(repo),
+            cerrarSesionUseCase = CerrarSesionUseCase(repo),
+            sesionGuardadaUseCase = SesionGuardadaUseCase(repo),
+            sessionCoordinator = coordinator,
+            almacenSeguro = almacen,
+            platformConfig = configDebug
+        )
+
+        assertTrue(viewModel.esDepuracion, "esDepuracion debe ser true en debug")
+        viewModel.corromperTokenParaPruebaDebug()
+        advanceUntilIdle()
+
+        assertEquals("jwt.token.valido.sig123y", almacen.leerToken(), "El token debe haber sido mutado de forma controlada en debug")
+    }
 }
+
 
