@@ -1,46 +1,58 @@
 package pe.edu.upeu.pharmamobil.data.repository
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
 /**
- * Almacenamiento en memoria de productos. El id lo asigna el repositorio,
- * no la pantalla, para evitar identificadores duplicados.
- *
- * El delay simula la latencia que traera el backend REST, de modo que el
- * estado de carga de la pantalla sea visible desde ahora.
- *
- * Koin lo registra como single, asi que es un objeto compartido y sus metodos
- * son suspend: nada garantiza que dos llamadas no se crucen. El [Mutex]
- * protege la lista y el contador de ids de esa carrera.
+ * Implementación en memoria del repositorio de productos.
+ * Simula latencia mediante delay() para exponer los estados de carga en la UI y tests.
  */
 class ProductoRepositorioEnMemoria : ProductoRepository {
 
-    private val candado = Mutex()
-    private val productos = mutableListOf<Producto>()
-    private var siguienteId = 1L
+    private val inventario = mutableListOf(
+        Producto(id = 1L, nombre = "Paracetamol", precio = 15.50, stock = 100, activo = true, categoria = "Analgésicos"),
+        Producto(id = 2L, nombre = "Ibuprofeno", precio = 18.90, stock = 50, activo = true, categoria = "Antiinflamatorios"),
+        Producto(id = 3L, nombre = "Amoxicilina", precio = 25.00, stock = 5, activo = true, categoria = "Antibióticos"),
+        Producto(id = 4L, nombre = "Loratadina", precio = 12.50, stock = 0, activo = false, categoria = "Antialérgicos"),
+        Producto(id = 5L, nombre = "Diclofenaco", precio = 20.00, stock = 3, activo = true, categoria = "Antiinflamatorios")
+    )
 
-    override suspend fun registrar(producto: Producto): Producto {
-        delay(RETARDO_REGISTRO_MS)
-        return candado.withLock {
-            val guardado = producto.copy(id = siguienteId++)
-            productos.add(guardado)
-            guardado
-        }
-    }
+    private var nextId = 6L
 
     override suspend fun listar(): List<Producto> {
-        delay(RETARDO_LISTADO_MS)
-        return candado.withLock {
-            productos.toList()
-        }
+        delay(100)
+        return inventario.toList()
     }
 
-    private companion object {
-        const val RETARDO_REGISTRO_MS = 400L
-        const val RETARDO_LISTADO_MS = 600L
+    override suspend fun obtener(id: Long): Producto {
+        delay(50)
+        return inventario.find { it.id == id }
+            ?: throw NoSuchElementException("Producto con ID $id no encontrado")
+    }
+
+    override suspend fun registrar(producto: Producto): Producto {
+        delay(100)
+        val productoConId = producto.copy(id = if (producto.id > 0L) producto.id else nextId++)
+        inventario.add(0, productoConId)
+        return productoConId
+    }
+
+    override suspend fun actualizar(producto: Producto): Producto {
+        delay(100)
+        val index = inventario.indexOfFirst { it.id == producto.id }
+        if (index == -1) {
+            throw NoSuchElementException("No se puede actualizar: Producto con ID ${producto.id} no existe")
+        }
+        inventario[index] = producto
+        return producto
+    }
+
+    override suspend fun eliminar(id: Long) {
+        delay(50)
+        val removido = inventario.removeAll { it.id == id }
+        if (!removido) {
+            throw NoSuchElementException("No se puede eliminar: Producto con ID $id no existe")
+        }
     }
 }
