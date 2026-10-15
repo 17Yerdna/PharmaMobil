@@ -2,11 +2,11 @@ package pe.edu.upeu.pharmamobil.domain.repository
 
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 
+/**
+ * Puerto de salida para la persistencia y consulta del inventario de productos.
+ * Redactada en el lenguaje ubicuo del negocio, sin detalles tecnológicos ni dependencias externas.
+ */
 interface ProductoRepository {
-
-    /** Incorpora el producto al inventario y devuelve el producto ya identificado. */
     suspend fun registrar(producto: Producto): Producto
-
-    /** Entrega el inventario completo en el orden en que fue registrado. */
     suspend fun listar(): List<Producto>
 }
