@@ -71,13 +71,33 @@ fun ProductoScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Catálogo sincronizado por Ktor REST",
+                    text = if (uiState.ultimaSincronizacion != null) "Sincronizado: ${uiState.ultimaSincronizacion}" else "Persistencia SQLite Offline-First",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IconButton(
+                    onClick = { viewModel.sincronizar() },
+                    enabled = !uiState.estaSincronizando,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    if (uiState.estaSincronizando) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = AppIcons.CheckCircle,
+                            contentDescription = "Sincronizar ahora",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 if (uiState.esDepuracion) {
                     OutlinedButton(
                         onClick = { viewModel.simularOperacion403() },
@@ -143,6 +163,68 @@ fun ProductoScreen(
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.primaryContainer
             )
+        }
+
+        // Banner Offline-First (Modo sin conexión y productos pendientes)
+        if (uiState.avisoRed || uiState.totalPendientes > 0) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = if (uiState.totalPendientes > 0) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = AppIcons.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = if (uiState.avisoRed) "Modo sin conexión (Offline)" else "Sincronización pendiente",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            if (uiState.totalPendientes > 0) {
+                                Text(
+                                    text = "${uiState.totalPendientes} producto(s) guardado(s) localmente en SQLite",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = { viewModel.sincronizar() },
+                        enabled = !uiState.estaSincronizando,
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        if (uiState.estaSincronizando) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(
+                                text = "Sincronizar",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Banner de Éxito
@@ -509,7 +591,7 @@ fun ProductoScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Button(
-                                    onClick = { viewModel.cargarProductos() },
+                                    onClick = { viewModel.sincronizar() },
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
@@ -899,6 +981,29 @@ fun ProductoItemCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Pastilla semántica de stock compacta
+                if (producto.id < 0L) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "⏳ Pendiente de sincronización",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.sp,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
                 Surface(
                     color = when {
                         !producto.activo -> MaterialTheme.colorScheme.surfaceVariant
@@ -973,13 +1078,13 @@ fun ProductoItemCard(
                     if (puedeEscribir) {
                         IconButton(
                             onClick = onEditarClick,
-                            enabled = habilitado,
+                            enabled = habilitado && producto.id > 0L,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
                                 imageVector = AppIcons.Edit,
                                 contentDescription = "Editar producto",
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = if (producto.id > 0L) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -988,13 +1093,13 @@ fun ProductoItemCard(
 
                         IconButton(
                             onClick = onEliminarClick,
-                            enabled = habilitado,
+                            enabled = habilitado && producto.id > 0L,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
                                 imageVector = AppIcons.Delete,
                                 contentDescription = "Eliminar producto",
-                                tint = SemanticDanger,
+                                tint = if (producto.id > 0L) SemanticDanger else MaterialTheme.colorScheme.outlineVariant,
                                 modifier = Modifier.size(18.dp)
                             )
                         }

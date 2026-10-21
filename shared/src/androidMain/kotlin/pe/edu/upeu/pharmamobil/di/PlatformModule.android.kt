@@ -6,9 +6,13 @@ import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguroAndroid
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriverAndroid
 import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
 import pe.edu.upeu.pharmamobil.platform.CompartidorAndroid
 import pe.edu.upeu.pharmamobil.platform.PlatformConfig
+import pe.edu.upeu.pharmamobil.platform.ProveedorHora
+import pe.edu.upeu.pharmamobil.platform.ProveedorHoraAndroid
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -19,6 +23,8 @@ actual val platformModule: Module = module {
     single<HttpClientEngine> { OkHttp.create() }
     single<Compartidor> { CompartidorAndroid(androidContext()) }
     single<AlmacenSeguro> { AlmacenSeguroAndroid(androidContext()) }
+    single<CreadorDeDriver> { CreadorDeDriverAndroid(androidContext()) }
+    single<ProveedorHora> { ProveedorHoraAndroid() }
     single<PlatformConfig> {
         val contexto = androidContext()
         val esDebug = (contexto.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0

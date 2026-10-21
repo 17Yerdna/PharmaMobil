@@ -1,30 +1,15 @@
 package pe.edu.upeu.pharmamobil.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import pe.edu.upeu.pharmamobil.data.repository.ProductoRepository
-import pe.edu.upeu.pharmamobil.domain.result.ResultadoProductos
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioOffline
+import pe.edu.upeu.pharmamobil.domain.model.Producto
 
-class ObservarProductosUseCase (
-    private val repository: ProductoRepository
+/**
+ * Caso de uso reactivo para observar el inventario de productos en tiempo real
+ * desde la fuente única de verdad local (SQLite / SQLDelight).
+ */
+class ObservarProductosUseCase(
+    private val repositorio: ProductoRepositorioOffline
 ) {
-    operator fun invoke(): Flow<ResultadoProductos> = flow {
-        emit(ResultadoProductos.cargando)
-
-        try {
-            val productos = repository.obtenerProductos()
-
-            emit(
-                ResultadoProductos.Exito(
-                    productos = productos
-                )
-            )
-} catch (exception: Exception) {
-            emit(
-                ResultadoProductos.Error(
-                    mensaje = exception.message ?: "Error al cargar productos"
-                )
-            )
-        }
-    }
-    }
+    operator fun invoke(): Flow<List<Producto>> = repositorio.observar()
+}

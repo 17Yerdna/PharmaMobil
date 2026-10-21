@@ -13,16 +13,19 @@ import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
 import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
 import pe.edu.upeu.pharmamobil.platform.PlatformConfig
 
 /**
- * ViewModel multiplataforma para el módulo de Productos.
- * Gestiona el ciclo de vida de operaciones CRUD y el flujo unidireccional de datos (UDF).
+ * ViewModel multiplataforma para el módulo de Productos con persistencia Offline-First.
+ * Se alimenta de forma reactiva exclusivamente desde SQLite a través de [ObservarProductosUseCase]
+ * y sincroniza atómicamente con el backend mediante [SincronizarProductosUseCase].
  */
 class ProductoViewModel(
-    private val listarProductosUseCase: ListarProductosUseCase,
+    private val observarProductosUseCase: ObservarProductosUseCase,
+    private val sincronizarProductosUseCase: SincronizarProductosUseCase,
     private val registrarProductoUseCase: RegistrarProductoUseCase,
     private val actualizarProductoUseCase: ActualizarProductoUseCase,
     private val eliminarProductoUseCase: EliminarProductoUseCase,
@@ -36,23 +39,51 @@ class ProductoViewModel(
     private var inventarioCompleto: List<Producto> = emptyList()
 
     init {
-        cargarProductos()
+        observarCatalogoLocal()
+        sincronizar()
     }
 
     /**
-     * Carga el catálogo completo de productos desde el backend REST.
+     * Observa continuamente la base de datos local SQLite (Single Source of Truth).
+     * Cada inserción, actualización o sincronización remota emite aquí de forma automática.
      */
-    fun cargarProductos() {
+    private fun observarCatalogoLocal() {
         viewModelScope.launch {
-            _uiState.update { it.copy(fase = FaseInventario.Cargando) }
-            val resultado = listarProductosUseCase()
-            resultado.onSuccess { productos ->
+            observarProductosUseCase().collect { productos ->
                 inventarioCompleto = productos
+                val pendientes = productos.count { it.id < 0L }
+                _uiState.update { it.copy(totalPendientes = pendientes) }
                 actualizarFaseYContadores()
+            }
+        }
+    }
+
+    /**
+     * Dispara la sincronización con el servidor:
+     * sube los pendientes acumulados, descarga el catálogo remoto y actualiza la hora de sincronización.
+     * No silencia los errores de conectividad para poder activar el indicador [avisoRed].
+     */
+    fun sincronizar() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(estaSincronizando = true) }
+            val resultado = sincronizarProductosUseCase()
+            resultado.onSuccess {
+                _uiState.update {
+                    it.copy(
+                        estaSincronizando = false,
+                        avisoRed = false,
+                        ultimaSincronizacion = sincronizarProductosUseCase.obtenerUltimaHoraSincronizada()
+                    )
+                }
             }.onFailure { fallo ->
                 val errorApi = (fallo as? ErrorApiException)?.error
-                val mensaje = mensajeDe(errorApi, fallo)
-                _uiState.update { it.copy(fase = FaseInventario.Error(mensaje)) }
+                val esFalloRed = errorApi is ErrorApi.SinConexion || errorApi is ErrorApi.TiempoAgotado
+                _uiState.update {
+                    it.copy(
+                        estaSincronizando = false,
+                        avisoRed = esFalloRed
+                    )
+                }
             }
         }
     }
@@ -85,6 +116,12 @@ class ProductoViewModel(
     }
 
     fun iniciarEdicion(producto: Producto) {
+        if (producto.id < 0L) {
+            _uiState.update {
+                it.copy(operacion = Operacion.Fallida("No se puede editar un producto pendiente de sincronización."))
+            }
+            return
+        }
         _uiState.update {
             it.copy(
                 formulario = FormularioProductoState(
@@ -165,7 +202,8 @@ class ProductoViewModel(
     }
 
     /**
-     * Guarda el producto (Crear con POST o Actualizar con PUT).
+     * Guarda el producto. Si no hay conexión a red, el alta se guarda localmente en SQLite
+     * con ID negativo temporal y queda pendiente de sincronización.
      */
     fun guardarProducto() {
         val form = _uiState.value.formulario
@@ -233,14 +271,15 @@ class ProductoViewModel(
             }
 
             resultado.onSuccess { productoGuardado ->
-                // Recargar catálogo para sincronizar con el backend
-                cargarProductos()
+                // No se invoca cargarProductos(); el Flow de SQLite actualizará la UI reactivamente
                 _uiState.update {
                     it.copy(
                         operacion = Operacion.Inactiva,
                         formulario = FormularioProductoState(),
                         mostrarFormulario = false,
-                        mensajeExito = if (form.esEdicion) {
+                        mensajeExito = if (productoGuardado.id < 0L) {
+                            "Producto '${productoGuardado.nombre}' guardado localmente; pendiente de sincronización."
+                        } else if (form.esEdicion) {
                             "Producto '${productoGuardado.nombre}' actualizado con éxito."
                         } else {
                             "Producto '${productoGuardado.nombre}' registrado con éxito."
@@ -254,6 +293,12 @@ class ProductoViewModel(
     }
 
     fun solicitarEliminacion(producto: Producto) {
+        if (producto.id < 0L) {
+            _uiState.update {
+                it.copy(operacion = Operacion.Fallida("No se puede eliminar un producto pendiente de sincronización."))
+            }
+            return
+        }
         _uiState.update { it.copy(productoAEliminar = producto) }
     }
 
@@ -273,7 +318,6 @@ class ProductoViewModel(
 
             eliminarProductoUseCase(producto.id)
                 .onSuccess {
-                    cargarProductos()
                     _uiState.update {
                         it.copy(
                             operacion = Operacion.Inactiva,
@@ -308,7 +352,6 @@ class ProductoViewModel(
                 activo = true
             )
             resultado.onSuccess { productoCreado ->
-                cargarProductos()
                 _uiState.update {
                     it.copy(
                         operacion = Operacion.Inactiva,

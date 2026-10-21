@@ -8,6 +8,7 @@ data class ProductoUi(
     val precioFormateado: String = formatearSoles(producto.precio)
 ) {
     val id: Long get() = producto.id
+    val esPendiente: Boolean get() = producto.id < 0L
 }
 
 fun Producto.comoTextoParaCompartir(): String =

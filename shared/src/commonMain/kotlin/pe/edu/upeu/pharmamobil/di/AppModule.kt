@@ -6,10 +6,13 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
+import pe.edu.upeu.pharmamobil.data.local.ProductoLocal
 import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
 import pe.edu.upeu.pharmamobil.data.remote.crearHttpClient
 import pe.edu.upeu.pharmamobil.data.repository.AuthRepositorioRest
-import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioOffline
+import pe.edu.upeu.pharmamobil.db.PharmaDb
 import pe.edu.upeu.pharmamobil.domain.repository.AuthRepository
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 import pe.edu.upeu.pharmamobil.domain.session.SessionCoordinator
@@ -20,16 +23,26 @@ import pe.edu.upeu.pharmamobil.presentation.sesion.SesionViewModel
 private const val CATEGORIA_POR_DEFECTO = 1L
 
 /**
- * Módulo de la capa de datos: Registra HttpClient, ProductoApi, AuthRepositorioRest y ProductoRepositorioRest.
+ * Módulo de la capa de datos: Registra HttpClient, BD SQLite, ProductoApi, AuthRepositorioRest y ProductoRepositorioOffline.
  */
 val dataModule = module {
     single { crearHttpClient(get(), get(), get(), get()) }
+    single { PharmaDb(get<CreadorDeDriver>().crear()) }
+    singleOf(::ProductoLocal)
     singleOf(::ProductoApi)
     single<AuthRepository> {
         AuthRepositorioRest(get(), get())
     }
+    single {
+        ProductoRepositorioOffline(
+            local = get(),
+            api = get(),
+            proveedorHora = get(),
+            categoriaPorDefecto = CATEGORIA_POR_DEFECTO
+        )
+    }
     single<ProductoRepository> {
-        ProductoRepositorioRest(get(), CATEGORIA_POR_DEFECTO)
+        get<ProductoRepositorioOffline>()
     }
 }
 
@@ -41,7 +54,8 @@ val domainModule = module {
     factoryOf(::IniciarSesionUseCase)
     factoryOf(::CerrarSesionUseCase)
     factoryOf(::SesionGuardadaUseCase)
-    factoryOf(::ListarProductosUseCase)
+    factoryOf(::ObservarProductosUseCase)
+    factoryOf(::SincronizarProductosUseCase)
     factoryOf(::RegistrarProductoUseCase)
     factoryOf(::ActualizarProductoUseCase)
     factoryOf(::EliminarProductoUseCase)

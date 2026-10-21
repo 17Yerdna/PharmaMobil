@@ -65,6 +65,10 @@ data class ProductoUiState(
     val totalActivos: Int = 0,
     val totalInactivos: Int = 0,
     val totalBajoStock: Int = 0,
+    val totalPendientes: Int = 0,
+    val estaSincronizando: Boolean = false,
+    val ultimaSincronizacion: String? = null,
+    val avisoRed: Boolean = false,
     val esDepuracion: Boolean = false
 )
 
