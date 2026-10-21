@@ -8,7 +8,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
 import pe.edu.upeu.pharmamobil.data.local.AlmacenSeguro
@@ -172,6 +174,51 @@ class ProductoRepositorioOfflineTest {
         assertTrue(resultados.all { it.isSuccess })
         assertEquals(1, contadorPosts.get(), "El Mutex debe garantizar que el POST se ejecute exactamente una sola vez")
         assertEquals(0, local.pendientes().size)
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun registrarMientrasSincroniza_noPublicaDosVecesElMismoPendiente() = runTest {
+        val local = ProductoLocal(crearBaseDatosEnMemoria())
+        val primerPostIniciado = CompletableDeferred<Unit>()
+        val liberarPrimerPost = CompletableDeferred<Unit>()
+        val contadorPosts = AtomicInteger(0)
+        val mockEngine = MockEngine { request ->
+            when (request.method.value) {
+                "POST" -> {
+                    if (contadorPosts.incrementAndGet() == 1) {
+                        primerPostIniciado.complete(Unit)
+                        liberarPrimerPost.await()
+                    }
+                    respond(
+                        content = """{"id":303,"nombre":"Producto simultáneo","precio":7.0,"stock":2,"estado":true,"categoriaId":1,"categoriaNombre":"General","images":[]}""",
+                        status = HttpStatusCode.Created,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                }
+                "GET" -> respond(
+                    content = """{"contenido":[{"id":303,"nombre":"Producto simultáneo","precio":7.0,"stock":2,"estado":true,"categoriaId":1,"categoriaNombre":"General","images":[]}],"pagina":0,"tamanio":100,"totalElementos":1,"totalPaginas":1,"ultima":true}""",
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+                else -> respond("", HttpStatusCode.NotFound)
+            }
+        }
+        val api = ProductoApi(crearHttpClient(mockEngine, FakeAlmacenSeguro(), SessionCoordinator(), configTest))
+        val repo = ProductoRepositorioOffline(local, api, FakeProveedorHora())
+
+        val alta = async {
+            repo.registrar(Producto(0L, "Producto simultáneo", 7.0, 2, true))
+        }
+        primerPostIniciado.await()
+        val sincronizacion = async { repo.sincronizar() }
+        runCurrent()
+        liberarPrimerPost.complete(Unit)
+
+        alta.await()
+        assertTrue(sincronizacion.await().isSuccess)
+        assertEquals(1, contadorPosts.get(), "El alta y la sincronización deben compartir exclusión mutua")
+        assertEquals(listOf(303L), repo.listar().map { it.id })
     }
 
     @Test

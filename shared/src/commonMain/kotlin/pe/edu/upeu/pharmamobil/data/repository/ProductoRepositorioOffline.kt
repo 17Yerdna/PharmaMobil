@@ -32,12 +32,12 @@ class ProductoRepositorioOffline(
     /**
      * Expone un flujo reactivo que emite en tiempo real cualquier cambio en el inventario local.
      */
-    fun observar(): Flow<List<Producto>> = local.observarTodos()
+    override fun observar(): Flow<List<Producto>> = local.observarTodos()
 
     /**
      * Retorna la hora formateada de la última sincronización remota exitosa.
      */
-    fun obtenerUltimaHoraSincronizada(): String? = ultimaHoraSincronizada
+    override fun obtenerUltimaHoraSincronizada(): String? = ultimaHoraSincronizada
 
     /**
      * Ejecuta el ciclo de sincronización bidireccional con el servidor protegido por [Mutex]:
@@ -46,7 +46,7 @@ class ProductoRepositorioOffline(
      * 3. Descarga el catálogo completo del servidor y refresca la caché local sin borrar pendientes.
      * 4. Propaga cualquier error de red o timeout tipado como [ErrorApiException] sin silenciarlo.
      */
-    suspend fun sincronizar(): Result<Unit> = mutexSincronizacion.withLock {
+    override suspend fun sincronizar(): Result<Unit> = mutexSincronizacion.withLock {
         runCatching {
             // 1. Subir pendientes
             val pendientes = local.pendientes()
@@ -90,14 +90,14 @@ class ProductoRepositorioOffline(
      * 3. Si no hay conexión o expira el tiempo, devuelve el producto guardado localmente (éxito offline).
      * 4. Si el servidor rechaza con 400 (validación) o 403 (permisos), revierte el pendiente local y lanza el error.
      */
-    override suspend fun registrar(producto: Producto): Producto {
+    override suspend fun registrar(producto: Producto): Producto = mutexSincronizacion.withLock {
         val guardadoLocal = local.guardarLocalPendiente(producto)
 
         val resultadoRemoto = ejecutarLlamada {
             api.crear(guardadoLocal.toRequest(categoriaPorDefecto))
         }
 
-        return if (resultadoRemoto.isSuccess) {
+        if (resultadoRemoto.isSuccess) {
             val remoto = resultadoRemoto.getOrThrow().toDomain()
             local.reemplazarIdTemporalPorRemoto(guardadoLocal.id, remoto)
             remoto

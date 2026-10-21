@@ -1,6 +1,8 @@
 package pe.edu.upeu.pharmamobil.data.repository
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
@@ -19,6 +21,11 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
     )
 
     private var nextId = 6L
+    private val productosObservables = MutableStateFlow(inventario.toList())
+
+    override fun observar() = productosObservables.asStateFlow()
+    override suspend fun sincronizar(): Result<Unit> = Result.success(Unit)
+    override fun obtenerUltimaHoraSincronizada(): String? = null
 
     override suspend fun listar(): List<Producto> {
         delay(100)
@@ -35,6 +42,7 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         delay(100)
         val productoConId = producto.copy(id = if (producto.id > 0L) producto.id else nextId++)
         inventario.add(0, productoConId)
+        productosObservables.value = inventario.toList()
         return productoConId
     }
 
@@ -45,6 +53,7 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
             throw NoSuchElementException("No se puede actualizar: Producto con ID ${producto.id} no existe")
         }
         inventario[index] = producto
+        productosObservables.value = inventario.toList()
         return producto
     }
 
@@ -54,5 +63,6 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         if (!removido) {
             throw NoSuchElementException("No se puede eliminar: Producto con ID $id no existe")
         }
+        productosObservables.value = inventario.toList()
     }
 }

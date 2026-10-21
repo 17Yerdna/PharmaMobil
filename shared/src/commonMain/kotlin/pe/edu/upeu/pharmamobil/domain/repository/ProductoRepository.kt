@@ -1,5 +1,6 @@
 package pe.edu.upeu.pharmamobil.domain.repository
 
+import kotlinx.coroutines.flow.Flow
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 
 /**
@@ -7,6 +8,9 @@ import pe.edu.upeu.pharmamobil.domain.model.Producto
  * Redactado en el lenguaje ubicuo del negocio, sin detalles tecnológicos ni dependencias externas.
  */
 interface ProductoRepository {
+    fun observar(): Flow<List<Producto>>
+    suspend fun sincronizar(): Result<Unit>
+    fun obtenerUltimaHoraSincronizada(): String?
     suspend fun listar(): List<Producto>
     suspend fun obtener(id: Long): Producto
     suspend fun registrar(producto: Producto): Producto

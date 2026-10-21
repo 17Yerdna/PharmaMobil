@@ -1,5 +1,7 @@
 package pe.edu.upeu.pharmamobil.data.repository
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import pe.edu.upeu.pharmamobil.data.mapper.toDomain
 import pe.edu.upeu.pharmamobil.data.mapper.toRequest
 import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
@@ -16,6 +18,11 @@ class ProductoRepositorioRest(
 ) : ProductoRepository {
 
     private var productosLocales: MutableList<Producto> = mutableListOf()
+    private val productosObservables = MutableStateFlow<List<Producto>>(emptyList())
+
+    override fun observar() = productosObservables.asStateFlow()
+    override suspend fun sincronizar(): Result<Unit> = runCatching { listar() }.map { }
+    override fun obtenerUltimaHoraSincronizada(): String? = null
 
     override suspend fun listar(): List<Producto> {
         val resultado = ejecutarLlamada {
@@ -25,6 +32,7 @@ class ProductoRepositorioRest(
         return if (resultado.isSuccess && resultado.getOrThrow().isNotEmpty()) {
             val remotos = resultado.getOrThrow()
             productosLocales = remotos.distinctBy { it.id }.toMutableList()
+            productosObservables.value = productosLocales.toList()
             productosLocales
         } else {
             val alternativo = ejecutarLlamada {
@@ -33,6 +41,7 @@ class ProductoRepositorioRest(
             if (alternativo.isSuccess && alternativo.getOrThrow().isNotEmpty()) {
                 val remotos = alternativo.getOrThrow()
                 productosLocales = remotos.distinctBy { it.id }.toMutableList()
+                productosObservables.value = productosLocales.toList()
                 productosLocales
             } else if (productosLocales.isNotEmpty()) {
                 productosLocales
@@ -56,6 +65,7 @@ class ProductoRepositorioRest(
         }
         val creado = resultado.getOrThrow()
         productosLocales.add(0, creado)
+        productosObservables.value = productosLocales.toList()
         return creado
     }
 
@@ -67,6 +77,7 @@ class ProductoRepositorioRest(
         val index = productosLocales.indexOfFirst { it.id == producto.id }
         if (index != -1) {
             productosLocales[index] = actualizado
+            productosObservables.value = productosLocales.toList()
         }
         return actualizado
     }
@@ -77,5 +88,6 @@ class ProductoRepositorioRest(
         }
         resultado.getOrThrow()
         productosLocales.removeAll { it.id == id }
+        productosObservables.value = productosLocales.toList()
     }
 }
