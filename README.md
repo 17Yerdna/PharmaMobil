@@ -150,7 +150,8 @@ Se implementa una arquitectura reactiva donde la base de datos local SQLite embe
 - **Eliminación de la Carga Imperativa REST:** La interfaz de usuario (`ProductoScreen`) no depende de recargas manuales (`cargarProductos()` y `ListarProductosUseCase` fueron eliminados). En su lugar, el `ProductoViewModel` observa continuamente `observarProductosUseCase()`, emitiendo actualizaciones automáticas a la UI ante cualquier mutación en SQLite.
 - **Altas Offline y Claves Negativas Temporales:** Cuando se crea un medicamento sin red (modo avión), el repositorio genera un identificador temporal negativo (`-1, -2, ...`) mediante la consulta `SELECT COALESCE(MIN(id), 0) - 1 FROM producto WHERE id < 0;` y guarda el registro con `pendiente = 1`.
 - **Reconciliación y Reemplazo Atómico:** Al restablecer la red y ejecutar la sincronización, el repositorio envía los pendientes al backend Spring Boot (`PharmaSoft`), recibe el ID positivo permanente generado por la secuencia remota (ej. `id = 6`) y ejecuta una actualización atómica en SQLite (`UPDATE producto SET id = :nuevoId, pendiente = 0 WHERE id = :idTemporal;`).
-- **Resiliencia y Exclusión Mutua:** Se utiliza `Mutex` en `ProductoRepositorioOffline` para evitar condiciones de carrera durante la sincronización, propagando errores de red tipados (`ErrorApiException`) sin corromper el caché local ni alterar la marca temporal de sincronización exitosa.
+- **Resiliencia y Exclusión Mutua:** `registrar()` y `sincronizar()` comparten el mismo `Mutex`, evitando dos POST simultáneos del mismo pendiente. Los errores de red tipados (`ErrorApiException`) conservan el caché local.
+- **Contrato de dominio:** `ProductoRepository` expone `observar(): Flow<List<Producto>>` y `sincronizar()`. Los casos de uso dependen de esa interfaz.
 
 ### 2. Evidencias de Ejecución (5 Escenarios Validados)
 Todas las evidencias se encuentran documentadas en el informe oficial `docs/sesion11/S11_ActividadAutonoma_Mestanza_Bazan.pdf` y la carpeta `docs/sesion11/capturas/`:
@@ -159,7 +160,9 @@ Todas las evidencias se encuentran documentadas en el informe oficial `docs/sesi
 3. `captura_s11_03_alta_offline_id_negativo.png`: Medicamento creado offline con ID temporal `#00-1`, badge `⏳ Pendiente de sincronización` y banner de pendientes.
 4. `captura_s11_04_sincronizacion_reemplazo_id.png`: Sincronización exitosa con reemplazo atómico a `#006` y retiro de badge pendiente.
 5. `captura_s11_05_error_red_resiliencia.png`: Manejo resiliente de error de conexión (banner `⚠️ Modo sin conexión`), manteniendo intacto el inventario local.
-6. `captura_s11_06_pruebas_unitarias.png`: Suite completa de 50/50 pruebas unitarias superadas en `:shared:testAndroidHostTest` (100% éxito).
+6. `captura_s11_06_pruebas_unitarias.png`: Captura histórica de 50/50 pruebas. La suite actual tiene 54/54: siete pruebas de repositorio en `androidHostTest` y tres escenarios de presentación offline en `commonTest`.
+
+La verificación de backend autenticado confirmó por `GET /api/v1/productos` el producto **Ibuprofeno 800 mg Forte** con ID remoto `6` (S/ 15.50, stock 40). La evidencia y el desglose actualizado de pruebas figuran en el informe de sesión 11.
 
 
 

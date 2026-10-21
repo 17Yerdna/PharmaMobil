@@ -11,7 +11,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { 
     font-family: 'Times New Roman', Times, Georgia, serif; 
-    font-size: 11pt; 
+    font-size: 12pt;
     line-height: 1.5; 
     color: #1a1a1a; 
     background: #fff; 
@@ -46,7 +46,7 @@
     margin-bottom: 6px; 
   }
   .cover-faculty { 
-    font-size: 12pt; 
+    font-size: 12pt;
     color: #333; 
     font-weight: normal;
   }
@@ -93,7 +93,7 @@
   }
   .cover-meta-table td { 
     padding: 5px 0; 
-    font-size: 10.5pt; 
+    font-size: 12pt;
     vertical-align: top;
   }
   .cover-meta-label { 
@@ -119,7 +119,7 @@
 
   /* FORMATO DE CONTENIDO */
   h1 { 
-    font-size: 15pt; 
+    font-size: 15pt;
     color: #1b3a5c; 
     border-bottom: 2px solid #1b3a5c; 
     padding-bottom: 4px; 
@@ -128,14 +128,14 @@
     page-break-after: avoid; 
   }
   h2 { 
-    font-size: 12.5pt; 
+    font-size: 15pt;
     color: #2c5282; 
     margin-top: 16px; 
     margin-bottom: 8px; 
     page-break-after: avoid; 
   }
   h3 { 
-    font-size: 11pt; 
+    font-size: 11pt;
     color: #2b6cb0; 
     margin-top: 12px; 
     margin-bottom: 6px; 
@@ -154,7 +154,7 @@
   }
   code { 
     font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace; 
-    font-size: 9.5pt; 
+    font-size: 11pt;
     background-color: #f1f5f9; 
     padding: 1px 4px; 
     border-radius: 3px; 
@@ -178,7 +178,7 @@
     width: 100%; 
     border-collapse: collapse; 
     margin-bottom: 16px; 
-    font-size: 9.5pt; 
+    font-size: 11pt;
     page-break-inside: avoid; 
   }
   table.data-table th, table.data-table td { 
@@ -246,13 +246,13 @@
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
   }
   .evidence-caption { 
-    font-size: 9pt; 
+    font-size: 11pt;
     color: #475569; 
     font-style: italic; 
     margin-top: 6px; 
   }
   .evidence-details { 
-    font-size: 9.5pt; 
+    font-size: 11pt;
     margin-top: 10px; 
     line-height: 1.45; 
   }
@@ -264,7 +264,7 @@
     border-left: 4px solid #3b82f6;
     padding: 10px 14px;
     margin: 12px 0;
-    font-size: 9.5pt;
+    font-size: 11pt;
     border-radius: 0 6px 6px 0;
   }
 </style>
@@ -296,17 +296,17 @@
       <tr>
         <td class="cover-meta-label">Estudiante</td>
         <td class="cover-meta-sep">:</td>
-        <td class="cover-meta-value"><strong>Mestanza Bazán, Christian Andre</strong></td>
+        <td class="cover-meta-value"><strong>Andrey Fidel Mestanza Bazán</strong></td>
       </tr>
       <tr>
         <td class="cover-meta-label">Docente</td>
         <td class="cover-meta-sep">:</td>
-        <td class="cover-meta-value">Ing. David Choque</td>
+        <td class="cover-meta-value">Mg. Benjamín David Reyna Barreto</td>
       </tr>
       <tr>
         <td class="cover-meta-label">Ciclo / Semestre</td>
         <td class="cover-meta-sep">:</td>
-        <td class="cover-meta-value">VII Ciclo &bull; 2026-II</td>
+        <td class="cover-meta-value">VI Ciclo &bull; 2026-II</td>
       </tr>
       <tr>
         <td class="cover-meta-label">Repositorio / Rama</td>
@@ -322,7 +322,7 @@
   </div>
 
   <div class="cover-footer">
-    Lima &bull; Morales &bull; Juliaca &mdash; Perú 2026
+    Lima &mdash; Perú 2026
   </div>
 </div>
 
@@ -334,7 +334,7 @@
 En el ámbito de las aplicaciones móviles clínicas y farmacéuticas críticas, la disponibilidad continua del sistema frente a interrupciones o ausencia total de conectividad a internet resulta fundamental para evitar paradas operativas en el despacho de medicamentos y consulta de inventarios. La arquitectura <strong>Offline-First</strong> (fuente única de verdad local) garantiza que la aplicación sea plenamente funcional sin red, utilizando una base de datos local embebida como intermediaria reactiva obligatoria ante la interfaz de usuario.
 </p>
 <p>
-El presente informe documenta la implementación completa y validación empírica de la Sesión 11 en el proyecto <strong>PharmaMobil</strong> (Kotlin Multiplatform con Compose Multiplatform), persistiendo el catálogo de productos en <strong>SQLite</strong> mediante <strong>SQLDelight 2.1.0</strong> y sincronizándolo de forma bidireccional y transaccional con el backend <strong>PharmaSoft</strong> (Spring Boot 3 + PostgreSQL/H2).
+El presente informe documenta la implementación y validación en Android de la Sesión 11 en <strong>PharmaMobil</strong> (Kotlin Multiplatform con Compose Multiplatform). El catálogo se persiste en <strong>SQLite</strong> mediante <strong>SQLDelight 2.1.0</strong>; los productos pendientes se envían al backend <strong>PharmaSoft</strong> y el catálogo remoto se descarga posteriormente.
 </p>
 
 <div class="callout-box">
@@ -346,7 +346,7 @@ El presente informe documenta la implementación completa y validación empíric
 <ul>
   <li><strong>Definición del Esquema Relacional con SQLDelight:</strong> Diseñar y compilar el archivo <code>Producto.sq</code> con 8 columnas normalizadas (incluyendo la bandera de control <code>pendiente INTEGER</code>) y consultas reactivas automáticas.</li>
   <li><strong>Eliminación de la Carga Imperativa REST:</strong> Erradicar el patrón de recarga directa en memoria (<code>ListarProductosUseCase</code> y <code>cargarProductos()</code>) para que la vista consuma exclusivamente el <code>Flow&lt;List&lt;Producto&gt;&gt;</code> emitido por SQLite.</li>
-  <li><strong>Generación Atómica de Identificadores Negativos:</strong> Implementar en SQLite un generador de claves primarias temporales locales (<code>-1, -2, ...</code>) para altas offline sin colisionar con las secuencias del backend.</li>
+  <li><strong>Identificadores Negativos:</strong> Asignar claves temporales locales (<code>-1, -2, ...</code>) para altas offline sin colisionar con las secuencias del backend; el registro se serializa mediante <code>Mutex</code>.</li>
   <li><strong>Reemplazo Transaccional y Sincronización Remota:</strong> Crear el mecanismo atómico de reconciliación que envía pendientes al servidor y sustituye la clave negativa por el identificador permanente positivo remoto dentro de una transacción local.</li>
   <li><strong>Resiliencia de Red y Exclusión Mutua:</strong> Proteger el repositorio con <code>Mutex</code> para prevenir condiciones de carrera y propagar errores tipados de red (<code>ErrorApiException</code>) sin corromper el caché ni falsear la hora de sincronización.</li>
 </ul>
@@ -369,34 +369,26 @@ El contrato de persistencia se definió en el módulo compartido <code>shared/sr
     pendiente INTEGER NOT NULL DEFAULT 0
 );
 
--- Consultas Reactivas y Operaciones Atómicas
-todos:
-SELECT id, nombre, precio, stock, activo, imagen, categoria, pendiente
-FROM producto
-ORDER BY id ASC;
+listarTodos:
+SELECT * FROM producto ORDER BY nombre ASC;
 
-pendientes:
-SELECT id, nombre, precio, stock, activo, imagen, categoria, pendiente
-FROM producto
-WHERE pendiente = 1
-ORDER BY id ASC;
+listarPendientes:
+SELECT * FROM producto WHERE pendiente = 1 ORDER BY id DESC;
 
-siguienteIdTemporal:
-SELECT COALESCE(MIN(id), 0) - 1
-FROM producto
-WHERE id &lt; 0;
-
-insertarOActualizar:
+insertar:
 INSERT OR REPLACE INTO producto(id, nombre, precio, stock, activo, imagen, categoria, pendiente)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
-reemplazarIdTemporal:
-UPDATE producto
-SET id = :nuevoId, pendiente = 0
-WHERE id = :idTemporal;
+borrarPorId:
+DELETE FROM producto WHERE id = ?;
 
-eliminarPorId:
-DELETE FROM producto WHERE id = :id;</code></pre>
+borrarSincronizados:
+DELETE FROM producto WHERE pendiente = 0;
+
+siguienteIdLocal:
+SELECT COALESCE(MIN(id), 0) FROM producto;</code></pre>
+
+<p>La sustitución del ID temporal se implementa en <code>ProductoLocal.reemplazarIdTemporalPorRemoto()</code>: una transacción SQLDelight borra la fila negativa e inserta la respuesta remota con ID positivo y <code>pendiente = 0</code>.</p>
 
 <div class="page-break"></div>
 
@@ -412,12 +404,12 @@ DELETE FROM producto WHERE id = :id;</code></pre>
   <tbody>
     <tr>
       <td><code>CreadorDeDriverAndroid</code></td>
-      <td><code>data.local.driver</code></td>
+      <td><code>data.local</code></td>
       <td>Instancia <code>AndroidSqliteDriver(PharmaDb.Schema, context, "pharma.db")</code> integrando SQLite nativo en Android.</td>
     </tr>
     <tr>
       <td><code>CreadorDeDriverIos</code></td>
-      <td><code>data.local.driver</code></td>
+      <td><code>data.local</code></td>
       <td>Provee <code>NativeSqliteDriver(PharmaDb.Schema, "pharma.db")</code> para el runtime nativo de iOS.</td>
     </tr>
     <tr>
@@ -428,7 +420,7 @@ DELETE FROM producto WHERE id = :id;</code></pre>
     <tr>
       <td><code>ProductoRepositorioOffline</code></td>
       <td><code>data.repository</code></td>
-      <td>Implementa <code>ProductoRepositorio</code> coordinando la caché SQLite y el API REST Ktor con control de concurrencia mediante <code>Mutex</code>.</td>
+      <td>Implementa <code>ProductoRepository</code> coordinando SQLite y REST Ktor; el mismo <code>Mutex</code> serializa altas y sincronizaciones.</td>
     </tr>
   </tbody>
 </table>
@@ -460,7 +452,7 @@ El siguiente diagrama detalla cómo el repositorio procesa tanto el registro en 
                    │                                  │
                    │                     [ POST Pendiente al Backend ]
                    │                                  │ (devuelve id = 6)
-                   │                     [ local.reemplazarIdTemporal(-1, 6) ]
+                   │                     [ transacción: borrar -1 / insertar 6 ]
                    │                                  │
                    └─────────────────►[ local.guardarRemotos() ]
                                                       │
@@ -472,24 +464,21 @@ El siguiente diagrama detalla cómo el repositorio procesa tanto el registro en 
 
 <h1>3. Evidencias de Ejecución y Validación de Escenarios Reales</h1>
 <p>
-A continuación se presentan las 5 evidencias empíricas requeridas, capturadas directamente sobre el entorno de ejecución real (Android Studio Database Inspector y emulador Google Pixel 8 Android 14 conectado al backend Spring Boot <code>PharmaSoft</code>):
+A continuación se documentan cuatro capturas del emulador Android y verificaciones reproducibles de la base SQLite, el API autenticado y las pruebas automatizadas. No se presenta la imagen previa rotulada «Database Inspector» como prueba del IDE porque su procedencia no pudo verificarse.
 </p>
 
 <!-- EVIDENCIA 1 -->
 <div class="evidence-card">
   <div class="evidence-header">
-    <span class="evidence-title">Escenario 1: Inspección de Base de Datos SQLite (Database Inspector)</span>
-    <span class="evidence-badge">Verificado</span>
+    <span class="evidence-title">Escenario 1: Verificación del archivo SQLite exportado</span>
+    <span class="evidence-badge">Consulta real</span>
   </div>
   <p class="evidence-details">
-    <strong>Objetivo:</strong> Demostrar la persistencia física del archivo de base de datos <code>pharma.db</code> en el almacenamiento interno de la aplicación (<code>/data/data/pe.edu.upeu.pharmamobil/databases/</code>), verificando la tabla <code>producto</code> con sus 8 columnas normalizadas (<code>id</code>, <code>nombre</code>, <code>precio</code>, <code>stock</code>, <code>activo</code>, <code>imagen</code>, <code>categoria</code>, <code>pendiente</code>) y los 6 registros actualmente consolidados.
+    <strong>Objetivo:</strong> Comprobar el esquema y contenido del archivo SQLite de evidencia <code>pharma_synced.db</code>. La consulta <code>PRAGMA table_info(producto)</code> devuelve las ocho columnas definidas en <code>Producto.sq</code>; <code>SELECT COUNT(*), SUM(pendiente) FROM producto</code> devuelve 6 registros y 0 pendientes.
   </p>
-  <div class="evidence-img-container">
-    <img src="capturas/captura_s11_01_database_inspector.png" alt="Database Inspector" class="evidence-img-wide">
-    <div class="evidence-caption">Figura 1: Vista de Database Inspector en Android Studio con pharma.db, esquema de 8 columnas y 6 registros persistidos.</div>
-  </div>
+  <table class="data-table"><tr><th>Consulta SQLite</th><th>Resultado observado</th></tr><tr><td><code>COUNT(*)</code></td><td>6 productos</td></tr><tr><td><code>SUM(pendiente)</code></td><td>0 registros pendientes</td></tr><tr><td><code>SELECT id,nombre,precio,stock WHERE id=6</code></td><td>6 · Ibuprofeno 800 mg Forte · S/ 15.50 · stock 40</td></tr></table>
   <p class="evidence-details">
-    <strong>Validación Técnica:</strong> Se constata que la clave primaria <code>id</code> es de tipo <code>INTEGER (PK)</code>, el precio almacena valores reales (<code>REAL</code>), el stock maneja enteros (<code>INTEGER</code> mapeado a <code>Int</code> en dominio) y la columna <code>pendiente</code> refleja <code>0</code> para los registros plenamente sincronizados con el backend.
+    <strong>Alcance de la evidencia:</strong> El archivo exportado demuestra los datos y el esquema de SQLite, pero no sustituye una captura auténtica del panel Database Inspector. Esta última continúa siendo recomendable si la guía se evalúa literalmente.
   </p>
 </div>
 
@@ -500,11 +489,11 @@ A continuación se presentan las 5 evidencias empíricas requeridas, capturadas 
     <span class="evidence-badge">Verificado</span>
   </div>
   <p class="evidence-details">
-    <strong>Objetivo:</strong> Demostrar que tras una sincronización previa y reinicio de la aplicación, el catálogo completo de productos se carga y renderiza instantáneamente desde la base de datos local SQLite cuando el dispositivo se encuentra en modo avión (sin internet).
+    <strong>Objetivo:</strong> Demostrar que el catálogo ya persistido se visualiza sin red cuando el dispositivo está en modo avión. La captura no documenta un reinicio completo de la aplicación ni mide el tiempo de carga.
   </p>
   <div class="evidence-img-container">
     <img src="capturas/captura_s11_02_modo_avion_cache.png" alt="Modo Avión con Caché" class="evidence-img-phone">
-    <div class="evidence-caption">Figura 2: Interfaz de Inventario en Modo Avión con datos locales cargados desde SQLite y hora de sincronización previa.</div>
+    <div class="evidence-caption">Figura 1. Inventario visible en modo avión: el catálogo local permanece disponible sin una respuesta de red; la hora mostrada corresponde a la sesión de esa captura.</div>
   </div>
   <p class="evidence-details">
     <strong>Validación Técnica:</strong> Se observa claramente el ícono de avión <code>✈</code> activo en la barra de estado superior. La pantalla de inventario muestra los productos farmacéuticos (Amoxicilina 500 mg, Diclofenaco 50 mg, Ibuprofeno 400 mg, Paracetamol 500 mg) con sus tarjetas completas y el pie de última sincronización (<code>Sincronizado: 19:56:42</code>), sin emitir excepciones de red ni bloquear la navegación.
@@ -524,7 +513,7 @@ A continuación se presentan las 5 evidencias empíricas requeridas, capturadas 
   </p>
   <div class="evidence-img-container">
     <img src="capturas/captura_s11_03_alta_offline_id_negativo.png" alt="Alta Offline ID Negativo" class="evidence-img-phone">
-    <div class="evidence-caption">Figura 3: Producto creado offline con identificador temporal #00-1, badge ⏳ Pendiente de sincronización y banner de pendientes.</div>
+    <div class="evidence-caption">Figura 2. Alta sin conexión: el producto figura con ID temporal negativo, distintivo pendiente y aviso de un registro por sincronizar.</div>
   </div>
   <p class="evidence-details">
     <strong>Validación Técnica:</strong>
@@ -546,7 +535,7 @@ A continuación se presentan las 5 evidencias empíricas requeridas, capturadas 
   </p>
   <div class="evidence-img-container">
     <img src="capturas/captura_s11_04_sincronizacion_reemplazo_id.png" alt="Sincronización y Reemplazo de ID" class="evidence-img-phone">
-    <div class="evidence-caption">Figura 4: Reconciliación exitosa: el ID temporal -1 fue sustituido atómicamente por #006, desapareciendo el badge pendiente.</div>
+    <div class="evidence-caption">Figura 3. Después de sincronizar, el producto figura como #006 y desaparece el distintivo pendiente; el mensaje transitorio de alta local aún visible no acredita el resultado de la sincronización.</div>
   </div>
   <p class="evidence-details">
     <strong>Validación Técnica:</strong>
@@ -570,7 +559,7 @@ A continuación se presentan las 5 evidencias empíricas requeridas, capturadas 
   </p>
   <div class="evidence-img-container">
     <img src="capturas/captura_s11_05_error_red_resiliencia.png" alt="Resiliencia de Red" class="evidence-img-phone">
-    <div class="evidence-caption">Figura 5: Banner 'Modo sin conexión (Offline)' tras fallo de red, manteniendo intacto el catálogo de productos local.</div>
+    <div class="evidence-caption">Figura 4. Aviso de modo sin conexión mientras el inventario local continúa visible; un fallo de red no borra la caché.</div>
   </div>
   <p class="evidence-details">
     <strong>Validación Técnica:</strong>
@@ -584,25 +573,22 @@ A continuación se presentan las 5 evidencias empíricas requeridas, capturadas 
 <div class="evidence-card">
   <div class="evidence-header">
     <span class="evidence-title">Suite de Pruebas Unitarias Automatizadas (:shared:testAndroidHostTest)</span>
-    <span class="evidence-badge">50/50 Exitosas (100%)</span>
+    <span class="evidence-badge">54/54 actuales</span>
   </div>
   <p class="evidence-details">
     <strong>Objetivo:</strong> Validar mediante pruebas unitarias exhaustivas en el host el comportamiento del repositorio offline, la capa de autenticación, el mapeo de datos y los casos de uso.
   </p>
   <div class="evidence-img-container">
     <img src="capturas/captura_s11_06_pruebas_unitarias.png" alt="Reporte de Pruebas Unitarias" class="evidence-img-wide">
-    <div class="evidence-caption">Figura 6: Reporte HTML oficial de Gradle testAndroidHostTest con 50 pruebas superadas (100% éxito).</div>
+    <div class="evidence-caption">Figura 5. Captura histórica del reporte Gradle (50/50); se conserva para trazabilidad, no representa la ejecución actual.</div>
   </div>
   <p class="evidence-details">
-    <strong>Detalle de Pruebas de Persistencia Offline (ProductoRepositorioOfflineTest &mdash; 6/6 superadas):</strong><br>
-    &bull; <code>observar_emite_lista_desde_base_local()</code>: Comprueba que la UI recibe actualizaciones automáticas desde SQLite.<br>
-    &bull; <code>sincronizar_descarga_remotos_y_actualiza_local()</code>: Valida la descarga e inserción transaccional de productos remotos.<br>
-    &bull; <code>sincronizar_sube_pendientes_reemplaza_id_y_descarga()</code>: Verifica el flujo completo de subida y reemplazo atómico de ID.<br>
-    &bull; <code>sincronizar_propaga_error_si_falla_red()</code>: Asegura que los errores de conectividad no se silencien indebidamente.<br>
-    &bull; <code>crear_sin_conexion_guarda_en_local_con_id_negativo()</code>: Garantiza la asignación de ID negativo ante desconexión.<br>
-    &bull; <code>eliminar_producto_pendiente_lanza_error()</code>: Impide la eliminación remota de registros no sincronizados.
+    <strong>Ejecución actual:</strong> <code>./gradlew :shared:testAndroidHostTest</code> terminó con 54 pruebas correctas y 0 fallidas. Siete pruebas de <code>ProductoRepositorioOfflineTest</code> ejercitan SQLite/MockEngine, incluida <code>registrarMientrasSincroniza_noPublicaDosVecesElMismoPendiente</code>. Tres pruebas nuevas de <code>ProductoOfflineViewModelTest</code> residen en <code>commonTest</code> y verifican catálogo sin red, alta pendiente y reconciliación al reconectar mediante un repositorio falso. Estas tres pruebas de ViewModel no sustituyen las pruebas de SQLite.
   </p>
 </div>
+
+<h2>3.1 Verificación del producto en el backend</h2>
+<p>Con el backend local en funcionamiento, una solicitud autenticada a <code>GET /api/v1/productos?pagina=0&amp;tamanio=100</code> devolvió seis productos. El registro con <code>id = 6</code> fue «Ibuprofeno 800 mg Forte», precio <code>15.50</code> y stock <code>40</code>, coincidente con el archivo SQLite exportado y con la vista móvil. Una llamada sin JWT devolvió <code>401</code>, acorde con la protección del endpoint. Esta comprobación directa del API no equivale a una captura de la respuesta en Swagger UI; esa captura queda pendiente si es requisito literal de entrega.</p>
 
 <div class="page-break"></div>
 
@@ -623,8 +609,8 @@ A continuación se presentan las 5 evidencias empíricas requeridas, capturadas 
     </tr>
     <tr>
       <td><strong>Disponibilidad sin Red</strong></td>
-      <td>Nula. La pantalla muestra spinner infinito o pantalla de error 500/SinConexion.</td>
-      <td>Total. Los datos locales se cargan en milisegundos desde caché.</td>
+      <td>La lectura dependía de la respuesta HTTP y fallaba sin conectividad.</td>
+      <td>Los datos previamente persistidos siguen disponibles desde SQLite; no se midió latencia.</td>
     </tr>
     <tr>
       <td><strong>Alta de Nuevos Datos</strong></td>
@@ -639,17 +625,17 @@ A continuación se presentan las 5 evidencias empíricas requeridas, capturadas 
     <tr>
       <td><strong>Integridad Transaccional</strong></td>
       <td>Dependiente de la estabilidad de la conexión remota durante la llamada.</td>
-      <td>Garantizada por transacciones ACID en SQLite y exclusión mutua con <code>Mutex</code>.</td>
+      <td>La sustitución del ID es transaccional en SQLite; el <code>Mutex</code> evita POST duplicados entre alta y sincronización. No existe una transacción distribuida con el servidor.</td>
     </tr>
   </tbody>
 </table>
 
 <h1>5. Conclusiones y Lecciones Aprendidas</h1>
 <ol>
-  <li><strong>Independencia Operativa y Resiliencia:</strong> La transición a una arquitectura Offline-First transformó la aplicación móvil en un sistema tolerante a fallos, capaz de operar en áreas hospitalarias con baja cobertura o modo avión sin degradar la experiencia de usuario.</li>
+  <li><strong>Disponibilidad local:</strong> El catálogo ya descargado sigue siendo consultable en modo avión, y las altas pueden quedar pendientes sin perderse por un fallo de red.</li>
   <li><strong>Desacoplamiento Reactivo mediante Flow:</strong> Eliminar la carga manual imperativa (<code>ListarProductosUseCase</code> y <code>cargarProductos()</code>) garantizó que la interfaz reaccione únicamente a las mutaciones registradas en SQLite, evitando discrepancias de estado entre la base local y la memoria del ViewModel.</li>
-  <li><strong>Estrategia Segura de Identificadores Temporales:</strong> La asignación de números negativos correlativos (<code>-1, -2, ...</code>) en SQLite previene colisiones con las secuencias autoincrementales del backend Spring Boot, permitiendo una sustitución atómica limpia una vez restablecida la red.</li>
-  <li><strong>Multiplataforma Coherente en KMP:</strong> La integración de SQLDelight con drivers específicos por plataforma (<code>CreadorDeDriverAndroid</code> y <code>CreadorDeDriverIos</code>) consolida un núcleo de lógica de datos 100% compartido en <code>commonMain</code>, listo para su despliegue tanto en Android como en iOS.</li>
+  <li><strong>Identificadores temporales:</strong> Los números negativos (<code>-1, -2, ...</code>) separan altas locales de IDs remotos. El reemplazo local se ejecuta en una transacción tras la respuesta del servidor; una caída entre el POST y la reconciliación sigue siendo una limitación que requeriría idempotencia de extremo a extremo.</li>
+  <li><strong>Alcance multiplataforma:</strong> Existen creadores de driver específicos para Android e iOS y lógica compartida en <code>commonMain</code>. La ejecución y validación de esta entrega se limitan a Android, conforme a la indicación del docente.</li>
 </ol>
 
 </div>
