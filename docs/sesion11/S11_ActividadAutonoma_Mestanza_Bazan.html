@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>S11 Actividad Autónoma - Persistencia Offline-First - Mestanza Bazán</title>
+<style>
+  @page { 
+    size: A4; 
+    margin: 18mm 18mm 18mm 18mm; 
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    font-family: 'Times New Roman', Times, Georgia, serif; 
+    font-size: 11pt; 
+    line-height: 1.5; 
+    color: #1a1a1a; 
+    background: #fff; 
+  }
+
+  /* PORTADA INSTITUCIONAL */
+  .cover { 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: flex-start; 
+    align-items: stretch;
+    min-height: 94vh; 
+    page-break-after: always; 
+    padding: 10px 0 0 0; 
+    box-sizing: border-box;
+  }
+  .cover-identity {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  .cover-logo { 
+    width: 300px; 
+    max-width: 85%;
+    margin-bottom: 16px; 
+  }
+  .cover-university { 
+    font-size: 16pt; 
+    font-weight: bold; 
+    color: #1b3a5c; 
+    letter-spacing: 1.5px; 
+    text-transform: uppercase; 
+    margin-bottom: 6px; 
+  }
+  .cover-faculty { 
+    font-size: 12pt; 
+    color: #333; 
+    font-weight: normal;
+  }
+  .cover-title-group {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  .cover-divider { 
+    width: 100px; 
+    height: 3px; 
+    background: #d4a017; 
+    margin: 14px auto 18px auto; 
+  }
+  .cover-report-type { 
+    font-size: 12pt; 
+    text-transform: uppercase; 
+    letter-spacing: 2px; 
+    color: #555; 
+    margin-bottom: 8px; 
+  }
+  .cover-title { 
+    font-size: 19pt; 
+    font-weight: bold; 
+    color: #1b3a5c; 
+    line-height: 1.25; 
+    margin-bottom: 10px; 
+  }
+  .cover-subtitle { 
+    font-size: 12pt; 
+    color: #444; 
+    font-style: italic; 
+    max-width: 90%; 
+    margin: 0 auto; 
+  }
+  .cover-metadata { 
+    margin-top: auto; 
+    margin-bottom: 20px;
+    border-top: 1px solid #c5d5e5; 
+    padding-top: 16px; 
+  }
+  .cover-meta-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+  }
+  .cover-meta-table td { 
+    padding: 5px 0; 
+    font-size: 10.5pt; 
+    vertical-align: top;
+  }
+  .cover-meta-label { 
+    width: 25%; 
+    font-weight: bold; 
+    color: #1b3a5c; 
+  }
+  .cover-meta-sep { 
+    width: 3%; 
+    color: #666; 
+  }
+  .cover-meta-value { 
+    width: 72%; 
+    color: #222; 
+  }
+  .cover-footer { 
+    text-align: center; 
+    font-size: 10pt; 
+    color: #777; 
+    border-top: 1px solid #e0e0e0; 
+    padding-top: 10px; 
+  }
+
+  /* FORMATO DE CONTENIDO */
+  h1 { 
+    font-size: 15pt; 
+    color: #1b3a5c; 
+    border-bottom: 2px solid #1b3a5c; 
+    padding-bottom: 4px; 
+    margin-top: 24px; 
+    margin-bottom: 12px; 
+    page-break-after: avoid; 
+  }
+  h2 { 
+    font-size: 12.5pt; 
+    color: #2c5282; 
+    margin-top: 16px; 
+    margin-bottom: 8px; 
+    page-break-after: avoid; 
+  }
+  h3 { 
+    font-size: 11pt; 
+    color: #2b6cb0; 
+    margin-top: 12px; 
+    margin-bottom: 6px; 
+    page-break-after: avoid; 
+  }
+  p { 
+    margin-bottom: 10px; 
+    text-align: justify; 
+  }
+  ul, ol { 
+    margin-left: 24px; 
+    margin-bottom: 12px; 
+  }
+  li { 
+    margin-bottom: 4px; 
+  }
+  code { 
+    font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace; 
+    font-size: 9.5pt; 
+    background-color: #f1f5f9; 
+    padding: 1px 4px; 
+    border-radius: 3px; 
+    border: 1px solid #e2e8f0; 
+  }
+  pre { 
+    font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace; 
+    font-size: 8.5pt; 
+    background-color: #0f172a; 
+    color: #e2e8f0; 
+    padding: 10px 14px; 
+    border-radius: 6px; 
+    margin-bottom: 14px; 
+    overflow-x: auto; 
+    line-height: 1.4; 
+    page-break-inside: avoid; 
+  }
+
+  /* TABLAS */
+  table.data-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-bottom: 16px; 
+    font-size: 9.5pt; 
+    page-break-inside: avoid; 
+  }
+  table.data-table th, table.data-table td { 
+    border: 1px solid #cbd5e1; 
+    padding: 6px 10px; 
+    text-align: left; 
+  }
+  table.data-table th { 
+    background-color: #1e3a8a; 
+    color: #ffffff; 
+    font-weight: bold; 
+  }
+  table.data-table tr:nth-child(even) { 
+    background-color: #f8fafc; 
+  }
+
+  /* TARJETAS DE EVIDENCIA */
+  .evidence-card { 
+    background: #ffffff; 
+    border: 1px solid #cbd5e1; 
+    border-radius: 8px; 
+    padding: 14px; 
+    margin-bottom: 20px; 
+    page-break-inside: avoid; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); 
+  }
+  .evidence-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 1px solid #e2e8f0; 
+    padding-bottom: 8px; 
+    margin-bottom: 10px; 
+  }
+  .evidence-title { 
+    font-size: 11.5pt; 
+    font-weight: bold; 
+    color: #1e3a8a; 
+  }
+  .evidence-badge { 
+    background-color: #059669; 
+    color: #fff; 
+    padding: 3px 8px; 
+    border-radius: 4px; 
+    font-size: 8.5pt; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+  }
+  .evidence-img-container { 
+    text-align: center; 
+    margin: 10px 0; 
+  }
+  .evidence-img-phone { 
+    max-width: 320px; 
+    width: 60%;
+    border-radius: 8px; 
+    border: 1px solid #94a3b8; 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+  }
+  .evidence-img-wide { 
+    width: 100%; 
+    max-width: 720px; 
+    border-radius: 6px; 
+    border: 1px solid #94a3b8; 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+  }
+  .evidence-caption { 
+    font-size: 9pt; 
+    color: #475569; 
+    font-style: italic; 
+    margin-top: 6px; 
+  }
+  .evidence-details { 
+    font-size: 9.5pt; 
+    margin-top: 10px; 
+    line-height: 1.45; 
+  }
+  .page-break { 
+    page-break-before: always; 
+  }
+  .callout-box {
+    background-color: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    border-radius: 0 6px 6px 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <div class="cover-identity">
+    <img src="logo_upeu.png" alt="Logo UPeU" class="cover-logo">
+    <div class="cover-university">Universidad Peruana Unión</div>
+    <div class="cover-faculty">Facultad de Ingeniería y Arquitectura &bull; E.P. Ingeniería de Sistemas</div>
+  </div>
+
+  <div class="cover-title-group">
+    <div class="cover-report-type">Informe Técnico de Actividad Autónoma &mdash; Sesión 11</div>
+    <div class="cover-divider"></div>
+    <div class="cover-title">Arquitectura Offline-First y Persistencia Local Reactiva con SQLDelight en PharmaMobil</div>
+    <div class="cover-subtitle">Implementación de SQLite Multiplataforma, Generación de Identificadores Temporales Negativos, Reemplazo Atómico Remoto y Manejo Resiliente de Red en Kotlin Multiplatform</div>
+  </div>
+
+  <div class="cover-metadata">
+    <table class="cover-meta-table">
+      <tr>
+        <td class="cover-meta-label">Asignatura</td>
+        <td class="cover-meta-sep">:</td>
+        <td class="cover-meta-value">Desarrollo de Aplicaciones Móviles</td>
+      </tr>
+      <tr>
+        <td class="cover-meta-label">Estudiante</td>
+        <td class="cover-meta-sep">:</td>
+        <td class="cover-meta-value"><strong>Mestanza Bazán, Christian Andre</strong></td>
+      </tr>
+      <tr>
+        <td class="cover-meta-label">Docente</td>
+        <td class="cover-meta-sep">:</td>
+        <td class="cover-meta-value">Ing. David Choque</td>
+      </tr>
+      <tr>
+        <td class="cover-meta-label">Ciclo / Semestre</td>
+        <td class="cover-meta-sep">:</td>
+        <td class="cover-meta-value">VII Ciclo &bull; 2026-II</td>
+      </tr>
+      <tr>
+        <td class="cover-meta-label">Repositorio / Rama</td>
+        <td class="cover-meta-sep">:</td>
+        <td class="cover-meta-value"><code>PharmaMobil_Sesion7</code> / <code>feature/offline-first-mestanza</code></td>
+      </tr>
+      <tr>
+        <td class="cover-meta-label">Fecha de Entrega</td>
+        <td class="cover-meta-sep">:</td>
+        <td class="cover-meta-value">21 de Octubre de 2026</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="cover-footer">
+    Lima &bull; Morales &bull; Juliaca &mdash; Perú 2026
+  </div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="page-break"></div>
+
+<h1>1. Introducción y Objetivos</h1>
+<p>
+En el ámbito de las aplicaciones móviles clínicas y farmacéuticas críticas, la disponibilidad continua del sistema frente a interrupciones o ausencia total de conectividad a internet resulta fundamental para evitar paradas operativas en el despacho de medicamentos y consulta de inventarios. La arquitectura <strong>Offline-First</strong> (fuente única de verdad local) garantiza que la aplicación sea plenamente funcional sin red, utilizando una base de datos local embebida como intermediaria reactiva obligatoria ante la interfaz de usuario.
+</p>
+<p>
+El presente informe documenta la implementación completa y validación empírica de la Sesión 11 en el proyecto <strong>PharmaMobil</strong> (Kotlin Multiplatform con Compose Multiplatform), persistiendo el catálogo de productos en <strong>SQLite</strong> mediante <strong>SQLDelight 2.1.0</strong> y sincronizándolo de forma bidireccional y transaccional con el backend <strong>PharmaSoft</strong> (Spring Boot 3 + PostgreSQL/H2).
+</p>
+
+<div class="callout-box">
+  <strong>Nota de Alcance Multiplataforma (KMP):</strong><br>
+  En cumplimiento de los lineamientos de arquitectura limpia en KMP, se configuran e implementan los creadores de driver nativos tanto para Android (<code>CreadorDeDriverAndroid</code> con <code>AndroidSqliteDriver</code>) como para iOS (<code>CreadorDeDriverIos</code> con <code>NativeSqliteDriver</code>), manteniendo la coherencia de compilación multiplataforma. Conforme a las pautas y autorización expresa del docente, la ejecución, pruebas instrumentales y capturas de evidencia se realizan sobre el entorno Android (emulador Google Pixel 8, API 34).
+</div>
+
+<h2>Objetivos Técnicos Específicos</h2>
+<ul>
+  <li><strong>Definición del Esquema Relacional con SQLDelight:</strong> Diseñar y compilar el archivo <code>Producto.sq</code> con 8 columnas normalizadas (incluyendo la bandera de control <code>pendiente INTEGER</code>) y consultas reactivas automáticas.</li>
+  <li><strong>Eliminación de la Carga Imperativa REST:</strong> Erradicar el patrón de recarga directa en memoria (<code>ListarProductosUseCase</code> y <code>cargarProductos()</code>) para que la vista consuma exclusivamente el <code>Flow&lt;List&lt;Producto&gt;&gt;</code> emitido por SQLite.</li>
+  <li><strong>Generación Atómica de Identificadores Negativos:</strong> Implementar en SQLite un generador de claves primarias temporales locales (<code>-1, -2, ...</code>) para altas offline sin colisionar con las secuencias del backend.</li>
+  <li><strong>Reemplazo Transaccional y Sincronización Remota:</strong> Crear el mecanismo atómico de reconciliación que envía pendientes al servidor y sustituye la clave negativa por el identificador permanente positivo remoto dentro de una transacción local.</li>
+  <li><strong>Resiliencia de Red y Exclusión Mutua:</strong> Proteger el repositorio con <code>Mutex</code> para prevenir condiciones de carrera y propagar errores tipados de red (<code>ErrorApiException</code>) sin corromper el caché ni falsear la hora de sincronización.</li>
+</ul>
+
+<h1>2. Arquitectura de Datos y SQLDelight</h1>
+
+<h2>2.1 Esquema Relacional (Producto.sq)</h2>
+<p>
+El contrato de persistencia se definió en el módulo compartido <code>shared/src/commonMain/sqldelight/pe/edu/upeu/pharmamobil/db/Producto.sq</code>. Cada producto se almacena con tipos nativos de SQLite mapeados a Kotlin:
+</p>
+
+<pre><code>CREATE TABLE producto (
+    id INTEGER NOT NULL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    precio REAL NOT NULL,
+    stock INTEGER NOT NULL,
+    activo INTEGER NOT NULL DEFAULT 1,
+    imagen TEXT NOT NULL DEFAULT '',
+    categoria TEXT NOT NULL DEFAULT '',
+    pendiente INTEGER NOT NULL DEFAULT 0
+);
+
+-- Consultas Reactivas y Operaciones Atómicas
+todos:
+SELECT id, nombre, precio, stock, activo, imagen, categoria, pendiente
+FROM producto
+ORDER BY id ASC;
+
+pendientes:
+SELECT id, nombre, precio, stock, activo, imagen, categoria, pendiente
+FROM producto
+WHERE pendiente = 1
+ORDER BY id ASC;
+
+siguienteIdTemporal:
+SELECT COALESCE(MIN(id), 0) - 1
+FROM producto
+WHERE id &lt; 0;
+
+insertarOActualizar:
+INSERT OR REPLACE INTO producto(id, nombre, precio, stock, activo, imagen, categoria, pendiente)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+reemplazarIdTemporal:
+UPDATE producto
+SET id = :nuevoId, pendiente = 0
+WHERE id = :idTemporal;
+
+eliminarPorId:
+DELETE FROM producto WHERE id = :id;</code></pre>
+
+<div class="page-break"></div>
+
+<h2>2.2 Componentes de la Capa de Datos Local y Repositorio</h2>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Componente</th>
+      <th>Paquete / Archivo</th>
+      <th>Responsabilidad Clave</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>CreadorDeDriverAndroid</code></td>
+      <td><code>data.local.driver</code></td>
+      <td>Instancia <code>AndroidSqliteDriver(PharmaDb.Schema, context, "pharma.db")</code> integrando SQLite nativo en Android.</td>
+    </tr>
+    <tr>
+      <td><code>CreadorDeDriverIos</code></td>
+      <td><code>data.local.driver</code></td>
+      <td>Provee <code>NativeSqliteDriver(PharmaDb.Schema, "pharma.db")</code> para el runtime nativo de iOS.</td>
+    </tr>
+    <tr>
+      <td><code>ProductoLocal</code></td>
+      <td><code>data.local</code></td>
+      <td>Encapsula <code>ProductoQueries</code>, exponiendo <code>Flow&lt;List&lt;Producto&gt;&gt;</code> vía <code>asFlow().mapToList()</code> y ejecutando transacciones atómicas.</td>
+    </tr>
+    <tr>
+      <td><code>ProductoRepositorioOffline</code></td>
+      <td><code>data.repository</code></td>
+      <td>Implementa <code>ProductoRepositorio</code> coordinando la caché SQLite y el API REST Ktor con control de concurrencia mediante <code>Mutex</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2.3 Flujo de Sincronización y Reconciliación Atómica</h2>
+<p>
+El siguiente diagrama detalla cómo el repositorio procesa tanto el registro en modo desconectado como la sincronización posterior:
+</p>
+
+<pre><code>                    [ Usuario: Guardar Producto ]
+                                  │
+                                  ▼
+                     ¿Existe Conexión a Red?
+                       /                 \
+                 SÍ  /                     \  NO
+                   /                         \
+         [ POST /api/v1/productos ]      [ local.siguienteIdTemporal() ]
+                   │                                  │ (ej. id = -1)
+                   ▼                                  ▼
+         [ id remoto positivo ]          [ local.guardarLocalPendiente() ]
+                   │                     (id = -1, pendiente = 1)
+                   ▼                                  │
+         [ local.guardarRemotos() ]                   ▼
+                   │                     [ Flow de SQLite Notifica UI ]
+                   ▼                     (Badge: ⏳ Pendiente)
+         [ Flow Actualiza UI ]                        │
+                   │                                  ▼
+                   │                     [ Usuario: Reconecta y Sincroniza ]
+                   │                                  │
+                   │                     [ POST Pendiente al Backend ]
+                   │                                  │ (devuelve id = 6)
+                   │                     [ local.reemplazarIdTemporal(-1, 6) ]
+                   │                                  │
+                   └─────────────────►[ local.guardarRemotos() ]
+                                                      │
+                                                      ▼
+                                         [ Flow Actualiza UI ]
+                                         (ID #006, Badge Eliminado)</code></pre>
+
+<div class="page-break"></div>
+
+<h1>3. Evidencias de Ejecución y Validación de Escenarios Reales</h1>
+<p>
+A continuación se presentan las 5 evidencias empíricas requeridas, capturadas directamente sobre el entorno de ejecución real (Android Studio Database Inspector y emulador Google Pixel 8 Android 14 conectado al backend Spring Boot <code>PharmaSoft</code>):
+</p>
+
+<!-- EVIDENCIA 1 -->
+<div class="evidence-card">
+  <div class="evidence-header">
+    <span class="evidence-title">Escenario 1: Inspección de Base de Datos SQLite (Database Inspector)</span>
+    <span class="evidence-badge">Verificado</span>
+  </div>
+  <p class="evidence-details">
+    <strong>Objetivo:</strong> Demostrar la persistencia física del archivo de base de datos <code>pharma.db</code> en el almacenamiento interno de la aplicación (<code>/data/data/pe.edu.upeu.pharmamobil/databases/</code>), verificando la tabla <code>producto</code> con sus 8 columnas normalizadas (<code>id</code>, <code>nombre</code>, <code>precio</code>, <code>stock</code>, <code>activo</code>, <code>imagen</code>, <code>categoria</code>, <code>pendiente</code>) y los 6 registros actualmente consolidados.
+  </p>
+  <div class="evidence-img-container">
+    <img src="capturas/captura_s11_01_database_inspector.png" alt="Database Inspector" class="evidence-img-wide">
+    <div class="evidence-caption">Figura 1: Vista de Database Inspector en Android Studio con pharma.db, esquema de 8 columnas y 6 registros persistidos.</div>
+  </div>
+  <p class="evidence-details">
+    <strong>Validación Técnica:</strong> Se constata que la clave primaria <code>id</code> es de tipo <code>INTEGER (PK)</code>, el precio almacena valores reales (<code>REAL</code>), el stock maneja enteros (<code>INTEGER</code> mapeado a <code>Int</code> en dominio) y la columna <code>pendiente</code> refleja <code>0</code> para los registros plenamente sincronizados con el backend.
+  </p>
+</div>
+
+<!-- EVIDENCIA 2 -->
+<div class="evidence-card">
+  <div class="evidence-header">
+    <span class="evidence-title">Escenario 2: Comportamiento Offline &mdash; Modo Avión con Caché</span>
+    <span class="evidence-badge">Verificado</span>
+  </div>
+  <p class="evidence-details">
+    <strong>Objetivo:</strong> Demostrar que tras una sincronización previa y reinicio de la aplicación, el catálogo completo de productos se carga y renderiza instantáneamente desde la base de datos local SQLite cuando el dispositivo se encuentra en modo avión (sin internet).
+  </p>
+  <div class="evidence-img-container">
+    <img src="capturas/captura_s11_02_modo_avion_cache.png" alt="Modo Avión con Caché" class="evidence-img-phone">
+    <div class="evidence-caption">Figura 2: Interfaz de Inventario en Modo Avión con datos locales cargados desde SQLite y hora de sincronización previa.</div>
+  </div>
+  <p class="evidence-details">
+    <strong>Validación Técnica:</strong> Se observa claramente el ícono de avión <code>✈</code> activo en la barra de estado superior. La pantalla de inventario muestra los productos farmacéuticos (Amoxicilina 500 mg, Diclofenaco 50 mg, Ibuprofeno 400 mg, Paracetamol 500 mg) con sus tarjetas completas y el pie de última sincronización (<code>Sincronizado: 19:56:42</code>), sin emitir excepciones de red ni bloquear la navegación.
+  </p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- EVIDENCIA 3 -->
+<div class="evidence-card">
+  <div class="evidence-header">
+    <span class="evidence-title">Escenario 3: Alta Offline con ID Negativo Temporal</span>
+    <span class="evidence-badge">Verificado</span>
+  </div>
+  <p class="evidence-details">
+    <strong>Objetivo:</strong> Registrar un nuevo medicamento ("Ibuprofeno 800 mg Forte", S/. 15.50, stock 40) mientras el dispositivo permanece en modo avión. El repositorio captura la falta de red, genera una clave negativa temporal (<code>-1</code>), persiste el ítem en SQLite con <code>pendiente = 1</code> y notifica a la interfaz reactiva.
+  </p>
+  <div class="evidence-img-container">
+    <img src="capturas/captura_s11_03_alta_offline_id_negativo.png" alt="Alta Offline ID Negativo" class="evidence-img-phone">
+    <div class="evidence-caption">Figura 3: Producto creado offline con identificador temporal #00-1, badge ⏳ Pendiente de sincronización y banner de pendientes.</div>
+  </div>
+  <p class="evidence-details">
+    <strong>Validación Técnica:</strong>
+    1) Se visualiza el banner de advertencia superior: <code>⚠️ Sincronización pendiente: 1 producto(s) guardado(s) localmente en SQLite</code>.<br>
+    2) El mensaje de confirmación indica: <code>Producto 'Ibuprofeno 800 mg Forte' guardado localmente; pendiente de sincronización.</code><br>
+    3) La tarjeta del producto muestra el identificador temporal <code>#00-1</code> y la insignia amarilla <code>⏳ Pendiente de sincronización</code>.<br>
+    4) Los botones de editar y eliminar de dicho ítem quedan inhabilitados para proteger la integridad transaccional local.
+  </p>
+</div>
+
+<!-- EVIDENCIA 4 -->
+<div class="evidence-card">
+  <div class="evidence-header">
+    <span class="evidence-title">Escenario 4: Sincronización Remota y Reemplazo Atómico de ID</span>
+    <span class="evidence-badge">Verificado</span>
+  </div>
+  <p class="evidence-details">
+    <strong>Objetivo:</strong> Restablecer la conectividad de red (desactivar modo avión) y presionar el botón <code>Sincronizar</code>. El repositorio envía el producto pendiente al backend vía <code>POST /api/v1/productos</code>, recibe el ID positivo permanente generado por la secuencia de la base remota (<code>id = 6</code>), ejecuta la actualización atómica en SQLite y refresca la vista vía <code>Flow</code>.
+  </p>
+  <div class="evidence-img-container">
+    <img src="capturas/captura_s11_04_sincronizacion_reemplazo_id.png" alt="Sincronización y Reemplazo de ID" class="evidence-img-phone">
+    <div class="evidence-caption">Figura 4: Reconciliación exitosa: el ID temporal -1 fue sustituido atómicamente por #006, desapareciendo el badge pendiente.</div>
+  </div>
+  <p class="evidence-details">
+    <strong>Validación Técnica:</strong>
+    1) El banner de pendientes desaparece automáticamente de la interfaz.<br>
+    2) El producto "Ibuprofeno 800 mg Forte" ahora exhibe el identificador positivo definitivo <code>#006</code> y su categoría asignada.<br>
+    3) La insignia <code>⏳ Pendiente de sincronización</code> es retirada y los botones de edición y eliminación se habilitan.<br>
+    4) La hora de sincronización se actualiza exitosamente a <code>20:10:33</code> con el indicador de éxito.
+  </p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- EVIDENCIA 5 -->
+<div class="evidence-card">
+  <div class="evidence-header">
+    <span class="evidence-title">Escenario 5: Manejo de Errores de Red y Resiliencia Offline</span>
+    <span class="evidence-badge">Verificado</span>
+  </div>
+  <p class="evidence-details">
+    <strong>Objetivo:</strong> Evaluar la robustez del sistema cuando el usuario intenta forzar una sincronización sin conexión a internet. El repositorio propaga el error tipado (<code>ErrorApiException.ErrorConexion</code>) sin silenciarlo; el ViewModel activa el banner de aviso de red y conserva intacto el caché local.
+  </p>
+  <div class="evidence-img-container">
+    <img src="capturas/captura_s11_05_error_red_resiliencia.png" alt="Resiliencia de Red" class="evidence-img-phone">
+    <div class="evidence-caption">Figura 5: Banner 'Modo sin conexión (Offline)' tras fallo de red, manteniendo intacto el catálogo de productos local.</div>
+  </div>
+  <p class="evidence-details">
+    <strong>Validación Técnica:</strong>
+    1) El sistema despliega el banner informativo: <code>⚠️ Modo sin conexión (Offline) [Sincronizar]</code>.<br>
+    2) La lista de productos en pantalla no sufre parpadeos ni pérdida de datos; los 6 medicamentos persisten en la interfaz gracias al <code>Flow</code> emitido por SQLite.<br>
+    3) No se altera la última hora de sincronización válida, evitando reportar un falso positivo al usuario.
+  </p>
+</div>
+
+<!-- EVIDENCIA 6: PRUEBAS UNITARIAS -->
+<div class="evidence-card">
+  <div class="evidence-header">
+    <span class="evidence-title">Suite de Pruebas Unitarias Automatizadas (:shared:testAndroidHostTest)</span>
+    <span class="evidence-badge">50/50 Exitosas (100%)</span>
+  </div>
+  <p class="evidence-details">
+    <strong>Objetivo:</strong> Validar mediante pruebas unitarias exhaustivas en el host el comportamiento del repositorio offline, la capa de autenticación, el mapeo de datos y los casos de uso.
+  </p>
+  <div class="evidence-img-container">
+    <img src="capturas/captura_s11_06_pruebas_unitarias.png" alt="Reporte de Pruebas Unitarias" class="evidence-img-wide">
+    <div class="evidence-caption">Figura 6: Reporte HTML oficial de Gradle testAndroidHostTest con 50 pruebas superadas (100% éxito).</div>
+  </div>
+  <p class="evidence-details">
+    <strong>Detalle de Pruebas de Persistencia Offline (ProductoRepositorioOfflineTest &mdash; 6/6 superadas):</strong><br>
+    &bull; <code>observar_emite_lista_desde_base_local()</code>: Comprueba que la UI recibe actualizaciones automáticas desde SQLite.<br>
+    &bull; <code>sincronizar_descarga_remotos_y_actualiza_local()</code>: Valida la descarga e inserción transaccional de productos remotos.<br>
+    &bull; <code>sincronizar_sube_pendientes_reemplaza_id_y_descarga()</code>: Verifica el flujo completo de subida y reemplazo atómico de ID.<br>
+    &bull; <code>sincronizar_propaga_error_si_falla_red()</code>: Asegura que los errores de conectividad no se silencien indebidamente.<br>
+    &bull; <code>crear_sin_conexion_guarda_en_local_con_id_negativo()</code>: Garantiza la asignación de ID negativo ante desconexión.<br>
+    &bull; <code>eliminar_producto_pendiente_lanza_error()</code>: Impide la eliminación remota de registros no sincronizados.
+  </p>
+</div>
+
+<div class="page-break"></div>
+
+<h1>4. Análisis Comparativo: Modelo REST Directo vs. Offline-First</h1>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Dimensión</th>
+      <th>Modelo Anterior (REST Directo - Sesión 8/10)</th>
+      <th>Modelo Actual (Offline-First Reactivo - Sesión 11)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Fuente de Verdad</strong></td>
+      <td>Memoria volátil (<code>List&lt;Producto&gt;</code> en ViewModel) recargada vía HTTP.</td>
+      <td>Base de datos local SQLite física gestionada por SQLDelight.</td>
+    </tr>
+    <tr>
+      <td><strong>Disponibilidad sin Red</strong></td>
+      <td>Nula. La pantalla muestra spinner infinito o pantalla de error 500/SinConexion.</td>
+      <td>Total. Los datos locales se cargan en milisegundos desde caché.</td>
+    </tr>
+    <tr>
+      <td><strong>Alta de Nuevos Datos</strong></td>
+      <td>Bloqueada si no hay red o si el servidor no responde.</td>
+      <td>Permitida. Se genera ID negativo temporal y se marca pendiente.</td>
+    </tr>
+    <tr>
+      <td><strong>Actualización de la Vista</strong></td>
+      <td>Imperativa mediante llamadas manuales a <code>cargarProductos()</code>.</td>
+      <td>Reactiva continua mediante <code>Flow&lt;List&lt;Producto&gt;&gt;</code> desde SQLite.</td>
+    </tr>
+    <tr>
+      <td><strong>Integridad Transaccional</strong></td>
+      <td>Dependiente de la estabilidad de la conexión remota durante la llamada.</td>
+      <td>Garantizada por transacciones ACID en SQLite y exclusión mutua con <code>Mutex</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1>5. Conclusiones y Lecciones Aprendidas</h1>
+<ol>
+  <li><strong>Independencia Operativa y Resiliencia:</strong> La transición a una arquitectura Offline-First transformó la aplicación móvil en un sistema tolerante a fallos, capaz de operar en áreas hospitalarias con baja cobertura o modo avión sin degradar la experiencia de usuario.</li>
+  <li><strong>Desacoplamiento Reactivo mediante Flow:</strong> Eliminar la carga manual imperativa (<code>ListarProductosUseCase</code> y <code>cargarProductos()</code>) garantizó que la interfaz reaccione únicamente a las mutaciones registradas en SQLite, evitando discrepancias de estado entre la base local y la memoria del ViewModel.</li>
+  <li><strong>Estrategia Segura de Identificadores Temporales:</strong> La asignación de números negativos correlativos (<code>-1, -2, ...</code>) en SQLite previene colisiones con las secuencias autoincrementales del backend Spring Boot, permitiendo una sustitución atómica limpia una vez restablecida la red.</li>
+  <li><strong>Multiplataforma Coherente en KMP:</strong> La integración de SQLDelight con drivers específicos por plataforma (<code>CreadorDeDriverAndroid</code> y <code>CreadorDeDriverIos</code>) consolida un núcleo de lógica de datos 100% compartido en <code>commonMain</code>, listo para su despliegue tanto en Android como en iOS.</li>
+</ol>
+
+</div>
+</body>
+</html>

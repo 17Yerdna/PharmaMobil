@@ -137,4 +137,29 @@ La interfaz `AlmacenSeguro` desacopla la persistencia segura mediante Inyección
   .\gradlew.bat :androidApp:assembleDebug
   ```
 
+---
+
+## Sesión 11: Persistencia Local con SQLite (SQLDelight) y Arquitectura Offline-First Reactiva
+
+### 1. Arquitectura de Persistencia y Flujo Offline-First
+Se implementa una arquitectura reactiva donde la base de datos local SQLite embebida actúa como la **única fuente de verdad** para la interfaz de usuario:
+- **SQLDelight 2.1.0 Multiplataforma:** Esquema normalizado en `shared/src/commonMain/sqldelight/pe/edu/upeu/pharmamobil/db/Producto.sq` con 8 columnas: `id`, `nombre`, `precio`, `stock`, `activo`, `imagen`, `categoria`, `pendiente`.
+- **Drivers de Base de Datos KMP:**
+  - **Android (`CreadorDeDriverAndroid`):** `AndroidSqliteDriver(PharmaDb.Schema, context, "pharma.db")`.
+  - **iOS (`CreadorDeDriverIos`):** `NativeSqliteDriver(PharmaDb.Schema, "pharma.db")`.
+- **Eliminación de la Carga Imperativa REST:** La interfaz de usuario (`ProductoScreen`) no depende de recargas manuales (`cargarProductos()` y `ListarProductosUseCase` fueron eliminados). En su lugar, el `ProductoViewModel` observa continuamente `observarProductosUseCase()`, emitiendo actualizaciones automáticas a la UI ante cualquier mutación en SQLite.
+- **Altas Offline y Claves Negativas Temporales:** Cuando se crea un medicamento sin red (modo avión), el repositorio genera un identificador temporal negativo (`-1, -2, ...`) mediante la consulta `SELECT COALESCE(MIN(id), 0) - 1 FROM producto WHERE id < 0;` y guarda el registro con `pendiente = 1`.
+- **Reconciliación y Reemplazo Atómico:** Al restablecer la red y ejecutar la sincronización, el repositorio envía los pendientes al backend Spring Boot (`PharmaSoft`), recibe el ID positivo permanente generado por la secuencia remota (ej. `id = 6`) y ejecuta una actualización atómica en SQLite (`UPDATE producto SET id = :nuevoId, pendiente = 0 WHERE id = :idTemporal;`).
+- **Resiliencia y Exclusión Mutua:** Se utiliza `Mutex` en `ProductoRepositorioOffline` para evitar condiciones de carrera durante la sincronización, propagando errores de red tipados (`ErrorApiException`) sin corromper el caché local ni alterar la marca temporal de sincronización exitosa.
+
+### 2. Evidencias de Ejecución (5 Escenarios Validados)
+Todas las evidencias se encuentran documentadas en el informe oficial `docs/sesion11/S11_ActividadAutonoma_Mestanza_Bazan.pdf` y la carpeta `docs/sesion11/capturas/`:
+1. `captura_s11_01_database_inspector.png`: Inspección de `pharma.db` y tabla `producto` con 8 columnas y 6 registros persistidos.
+2. `captura_s11_02_modo_avion_cache.png`: Catálogo cargado desde caché SQLite en Modo Avión (ícono `✈` visible).
+3. `captura_s11_03_alta_offline_id_negativo.png`: Medicamento creado offline con ID temporal `#00-1`, badge `⏳ Pendiente de sincronización` y banner de pendientes.
+4. `captura_s11_04_sincronizacion_reemplazo_id.png`: Sincronización exitosa con reemplazo atómico a `#006` y retiro de badge pendiente.
+5. `captura_s11_05_error_red_resiliencia.png`: Manejo resiliente de error de conexión (banner `⚠️ Modo sin conexión`), manteniendo intacto el inventario local.
+6. `captura_s11_06_pruebas_unitarias.png`: Suite completa de 50/50 pruebas unitarias superadas en `:shared:testAndroidHostTest` (100% éxito).
+
+
 
