@@ -38,9 +38,13 @@ class ProductoRepositorioOfflineTest {
         override fun guardarToken(token: String) {}
         override fun leerToken(): String? = "jwt.test.token"
         override fun borrarToken() {}
+        override fun guardarIdentidad(usuario: String, nombreCompleto: String, permisos: Set<String>) {}
+        override fun leerIdentidad(): Triple<String, String, Set<String>>? = Triple("admin", "Administrador", emptySet())
+        override fun borrarIdentidad() {}
     }
 
-    private class FakeProveedorHora(var hora: String = "10:30:00") : ProveedorHora {
+    private class FakeProveedorHora(var hora: String = "10:30:00", var ahora: Long = 1729600000000L) : ProveedorHora {
+        override fun ahoraMillis(): Long = ahora
         override fun obtenerHoraActualFormateada(): String = hora
     }
 

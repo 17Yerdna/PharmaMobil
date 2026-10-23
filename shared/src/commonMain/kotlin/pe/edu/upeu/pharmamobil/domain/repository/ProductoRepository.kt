@@ -11,6 +11,7 @@ interface ProductoRepository {
     fun observar(): Flow<List<Producto>>
     suspend fun sincronizar(): Result<Unit>
     fun obtenerUltimaHoraSincronizada(): String?
+    fun obtenerUltimoSyncTimestamp(): Long?
     suspend fun listar(): List<Producto>
     suspend fun obtener(id: Long): Producto
     suspend fun registrar(producto: Producto): Producto

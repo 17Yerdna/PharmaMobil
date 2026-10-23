@@ -118,8 +118,12 @@ fun App() {
                         )
                     }
 
-                    is SesionEstado.Autenticado -> {
-                        val sesion = estado.sesion
+                    is SesionEstado.Autenticado, is SesionEstado.OfflineSoloLectura -> {
+                        val sesion = when (estado) {
+                            is SesionEstado.Autenticado -> estado.sesion
+                            is SesionEstado.OfflineSoloLectura -> estado.sesion
+                            else -> error("Estado no contemplado")
+                        }
 
                     // Si la pantalla activa es Clientes pero el rol no tiene permisos, redirigir a Inicio
                     LaunchedEffect(sesion) {

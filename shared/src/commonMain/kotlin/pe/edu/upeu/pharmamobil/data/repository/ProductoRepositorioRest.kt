@@ -23,6 +23,7 @@ class ProductoRepositorioRest(
     override fun observar() = productosObservables.asStateFlow()
     override suspend fun sincronizar(): Result<Unit> = runCatching { listar() }.map { }
     override fun obtenerUltimaHoraSincronizada(): String? = null
+    override fun obtenerUltimoSyncTimestamp(): Long? = null
 
     override suspend fun listar(): List<Producto> {
         val resultado = ejecutarLlamada {

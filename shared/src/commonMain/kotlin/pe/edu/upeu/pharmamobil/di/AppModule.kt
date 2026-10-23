@@ -54,6 +54,7 @@ val domainModule = module {
     factoryOf(::IniciarSesionUseCase)
     factoryOf(::CerrarSesionUseCase)
     factoryOf(::SesionGuardadaUseCase)
+    factoryOf(::RevalidarSesionUseCase)
     factoryOf(::ObservarProductosUseCase)
     factoryOf(::SincronizarProductosUseCase)
     factoryOf(::RegistrarProductoUseCase)

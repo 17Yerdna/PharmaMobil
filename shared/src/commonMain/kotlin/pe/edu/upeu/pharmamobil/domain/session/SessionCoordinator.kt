@@ -11,6 +11,7 @@ import pe.edu.upeu.pharmamobil.domain.model.Sesion
 sealed interface SesionEstado {
     data object NoAutenticado : SesionEstado
     data class Autenticado(val sesion: Sesion) : SesionEstado
+    data class OfflineSoloLectura(val sesion: Sesion) : SesionEstado
     data class Expirado(val mensaje: String) : SesionEstado
 }
 
@@ -24,6 +25,10 @@ class SessionCoordinator {
 
     fun notificarSesionIniciada(sesion: Sesion) {
         _estadoSesion.value = SesionEstado.Autenticado(sesion)
+    }
+
+    fun notificarSesionOffline(sesion: Sesion) {
+        _estadoSesion.value = SesionEstado.OfflineSoloLectura(sesion)
     }
 
     fun notificarSesionExpirada(mensaje: String = "Su sesión ha expirado. Ingrese sus credenciales nuevamente.") {

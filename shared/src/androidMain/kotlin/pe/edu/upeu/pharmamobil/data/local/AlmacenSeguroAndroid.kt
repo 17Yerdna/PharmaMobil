@@ -32,7 +32,34 @@ class AlmacenSeguroAndroid(contexto: Context) : AlmacenSeguro {
         prefs.edit().remove(CLAVE).apply()
     }
 
+    override fun guardarIdentidad(usuario: String, nombreCompleto: String, permisos: Set<String>) {
+        prefs.edit()
+            .putString(CLAVE_USUARIO, usuario)
+            .putString(CLAVE_NOMBRE, nombreCompleto)
+            .putString(CLAVE_PERMISOS, permisos.joinToString(","))
+            .apply()
+    }
+
+    override fun leerIdentidad(): Triple<String, String, Set<String>>? {
+        val usuario = prefs.getString(CLAVE_USUARIO, null) ?: return null
+        val nombre = prefs.getString(CLAVE_NOMBRE, null) ?: usuario
+        val permisosStr = prefs.getString(CLAVE_PERMISOS, "") ?: ""
+        val permisos = if (permisosStr.isBlank()) emptySet() else permisosStr.split(",").toSet()
+        return Triple(usuario, nombre, permisos)
+    }
+
+    override fun borrarIdentidad() {
+        prefs.edit()
+            .remove(CLAVE_USUARIO)
+            .remove(CLAVE_NOMBRE)
+            .remove(CLAVE_PERMISOS)
+            .apply()
+    }
+
     private companion object {
         const val CLAVE = "jwt"
+        const val CLAVE_USUARIO = "cached_usuario"
+        const val CLAVE_NOMBRE = "cached_nombre"
+        const val CLAVE_PERMISOS = "cached_permisos"
     }
 }

@@ -1,0 +1,10 @@
+CREATE TABLE metadata_sincronizacion (
+    clave TEXT NOT NULL PRIMARY KEY,
+    timestamp_millis INTEGER NOT NULL
+);
+
+obtenerTimestamp:
+SELECT timestamp_millis FROM metadata_sincronizacion WHERE clave = ?;
+
+guardarTimestamp:
+INSERT OR REPLACE INTO metadata_sincronizacion(clave, timestamp_millis) VALUES (?, ?);

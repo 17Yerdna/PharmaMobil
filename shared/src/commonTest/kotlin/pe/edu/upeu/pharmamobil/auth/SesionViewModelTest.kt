@@ -51,12 +51,18 @@ class SesionViewModelTest {
         }
 
         override suspend fun sesionGuardada(): Sesion? = sesionGuardadaRetorno
+
+        override suspend fun revalidarSesion(): Sesion =
+            sesionLoginRetorno ?: sesionGuardadaRetorno ?: throw ErrorSesionException(ErrorSesion.SesionExpirada)
     }
 
     private class FakeAlmacenSeguro(var tokenAlmacenado: String? = null) : AlmacenSeguro {
         override fun guardarToken(token: String) { tokenAlmacenado = token }
         override fun leerToken(): String? = tokenAlmacenado
         override fun borrarToken() { tokenAlmacenado = null }
+        override fun guardarIdentidad(usuario: String, nombreCompleto: String, permisos: Set<String>) {}
+        override fun leerIdentidad(): Triple<String, String, Set<String>>? = null
+        override fun borrarIdentidad() {}
     }
 
     @BeforeTest

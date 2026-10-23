@@ -11,12 +11,16 @@ import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
+import pe.edu.upeu.pharmamobil.domain.session.SesionEstado
+import pe.edu.upeu.pharmamobil.domain.session.SessionCoordinator
 import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.RevalidarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
 import pe.edu.upeu.pharmamobil.platform.PlatformConfig
+import pe.edu.upeu.pharmamobil.platform.ProveedorHora
 
 /**
  * ViewModel multiplataforma para el módulo de Productos con persistencia Offline-First.
@@ -30,7 +34,10 @@ class ProductoViewModel(
     private val actualizarProductoUseCase: ActualizarProductoUseCase,
     private val eliminarProductoUseCase: EliminarProductoUseCase,
     private val compartidor: Compartidor,
-    private val platformConfig: PlatformConfig
+    private val platformConfig: PlatformConfig,
+    private val sessionCoordinator: SessionCoordinator = SessionCoordinator(),
+    private val revalidarSesionUseCase: RevalidarSesionUseCase? = null,
+    private val proveedorHora: ProveedorHora? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductoUiState(esDepuracion = platformConfig.esDepuracion))
@@ -40,7 +47,10 @@ class ProductoViewModel(
 
     init {
         observarCatalogoLocal()
-        sincronizar()
+        actualizarTextoAntiguedad()
+        if (sessionCoordinator.estadoSesion.value !is SesionEstado.OfflineSoloLectura) {
+            sincronizar()
+        }
     }
 
     /**
@@ -65,14 +75,26 @@ class ProductoViewModel(
      */
     fun sincronizar() {
         viewModelScope.launch {
+            if (sessionCoordinator.estadoSesion.value is SesionEstado.OfflineSoloLectura) {
+                _uiState.update { it.copy(estaSincronizando = true) }
+                val revalidador = revalidarSesionUseCase
+                if (revalidador != null) {
+                    val resultado = revalidador()
+                    if (resultado.isFailure) {
+                        _uiState.update { it.copy(estaSincronizando = false) }
+                        return@launch
+                    }
+                }
+            }
+
             _uiState.update { it.copy(estaSincronizando = true) }
             val resultado = sincronizarProductosUseCase()
             resultado.onSuccess {
+                actualizarTextoAntiguedad()
                 _uiState.update {
                     it.copy(
                         estaSincronizando = false,
-                        avisoRed = false,
-                        ultimaSincronizacion = sincronizarProductosUseCase.obtenerUltimaHoraSincronizada()
+                        avisoRed = false
                     )
                 }
             }.onFailure { fallo ->
@@ -86,6 +108,31 @@ class ProductoViewModel(
                 }
             }
         }
+    }
+
+    fun calcularAntiguedad(timestampMillis: Long?, ahoraMillis: Long): String {
+        if (timestampMillis == null || timestampMillis <= 0L) {
+            return "Nunca se ha sincronizado"
+        }
+        val diferencia = (ahoraMillis - timestampMillis).coerceAtLeast(0L)
+        val minutos = diferencia / 60_000L
+        val horas = minutos / 60L
+        val dias = horas / 24L
+
+        val relativo = when {
+            dias >= 1L -> "hace más de un día"
+            horas >= 1L -> if (horas == 1L) "hace 1 hora" else "hace $horas horas"
+            minutos >= 1L -> if (minutos == 1L) "hace 1 minuto" else "hace $minutos minutos"
+            else -> "hace unos momentos"
+        }
+        return "Actualizado $relativo"
+    }
+
+    fun actualizarTextoAntiguedad() {
+        val timestamp = sincronizarProductosUseCase.obtenerUltimoSyncTimestamp()
+        val ahora = proveedorHora?.ahoraMillis() ?: 0L
+        val texto = calcularAntiguedad(timestamp, ahora)
+        _uiState.update { it.copy(ultimaSincronizacion = texto) }
     }
 
     fun seleccionarTab(tabIndex: Int) {

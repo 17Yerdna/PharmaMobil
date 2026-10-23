@@ -133,6 +133,20 @@ class ProductoLocal(private val db: PharmaDb) {
     }
 
     /**
+     * Persiste la marca de tiempo en milisegundos de la última sincronización correcta en SQLite.
+     */
+    fun guardarTimestampSincronizacion(timestampMillis: Long, clave: String = "ultimo_sync") {
+        db.metadataSincronizacionQueries.guardarTimestamp(clave, timestampMillis)
+    }
+
+    /**
+     * Retorna la marca de tiempo de la última sincronización correcta, o null si nunca se ha sincronizado.
+     */
+    fun obtenerUltimoSyncTimestamp(clave: String = "ultimo_sync"): Long? {
+        return db.metadataSincronizacionQueries.obtenerTimestamp(clave).executeAsOneOrNull()
+    }
+
+    /**
      * Mapeo de la entidad SQLDelight a la entidad de dominio [Producto].
      */
     private fun pe.edu.upeu.pharmamobil.db.Producto.toDomain(): Producto = Producto(

@@ -20,6 +20,7 @@ import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
 import pe.edu.upeu.pharmamobil.platform.PlatformConfig
+import pe.edu.upeu.pharmamobil.platform.ProveedorHora
 import pe.edu.upeu.pharmamobil.presentation.producto.FaseInventario
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import kotlin.test.Test
@@ -29,10 +30,17 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoOfflineViewModelTest {
+
+    private class FakeHora(var millis: Long = 1729600000000L) : ProveedorHora {
+        override fun ahoraMillis(): Long = millis
+        override fun obtenerHoraActualFormateada(): String = "10:30:00"
+    }
+
     private class RepositorioDeEscenarios(productosIniciales: List<Producto> = emptyList()) : ProductoRepository {
         private val productosLocales = MutableStateFlow(productosIniciales)
         var conectado = false
         var hora: String? = null
+        var timestamp: Long? = null
 
         override fun observar() = productosLocales.asStateFlow()
         override suspend fun sincronizar(): Result<Unit> {
@@ -41,9 +49,11 @@ class ProductoOfflineViewModelTest {
                 if (producto.id < 0L) producto.copy(id = 101L) else producto
             }
             hora = "10:30:00"
+            timestamp = 1729600000000L
             return Result.success(Unit)
         }
         override fun obtenerUltimaHoraSincronizada(): String? = hora
+        override fun obtenerUltimoSyncTimestamp(): Long? = timestamp
         override suspend fun listar() = productosLocales.value
         override suspend fun obtener(id: Long) = productosLocales.value.first { it.id == id }
         override suspend fun registrar(producto: Producto): Producto {
@@ -55,14 +65,15 @@ class ProductoOfflineViewModelTest {
         override suspend fun eliminar(id: Long) { productosLocales.value = productosLocales.value.filterNot { it.id == id } }
     }
 
-    private fun crearViewModel(repo: ProductoRepository) = ProductoViewModel(
+    private fun crearViewModel(repo: ProductoRepository, proveedorHora: ProveedorHora = FakeHora()) = ProductoViewModel(
         observarProductosUseCase = ObservarProductosUseCase(repo),
         sincronizarProductosUseCase = SincronizarProductosUseCase(repo),
         registrarProductoUseCase = RegistrarProductoUseCase(repo),
         actualizarProductoUseCase = ActualizarProductoUseCase(repo),
         eliminarProductoUseCase = EliminarProductoUseCase(repo),
         compartidor = object : Compartidor { override fun compartir(texto: String) {} },
-        platformConfig = PlatformConfig(esDepuracion = true, urlBase = "http://localhost/")
+        platformConfig = PlatformConfig(esDepuracion = true, urlBase = "http://localhost/"),
+        proveedorHora = proveedorHora
     )
 
     @Test
@@ -76,6 +87,7 @@ class ProductoOfflineViewModelTest {
             assertTrue(vm.uiState.value.avisoRed)
             val fase = vm.uiState.value.fase as FaseInventario.ConProductos
             assertEquals("Paracetamol", fase.productos.single().producto.nombre)
+            assertEquals("Nunca se ha sincronizado", vm.uiState.value.ultimaSincronizacion)
         } finally {
             Dispatchers.resetMain()
         }
@@ -106,8 +118,9 @@ class ProductoOfflineViewModelTest {
     fun reconectar_reemplazaPendienteYActualizaHora() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
+            val fakeHora = FakeHora(1729600000000L)
             val repo = RepositorioDeEscenarios(listOf(Producto(-1L, "Ibuprofeno", 15.5, 4, true)))
-            val vm = crearViewModel(repo)
+            val vm = crearViewModel(repo, fakeHora)
             advanceUntilIdle()
             assertEquals(1, vm.uiState.value.totalPendientes)
 
@@ -117,8 +130,13 @@ class ProductoOfflineViewModelTest {
 
             assertFalse(vm.uiState.value.avisoRed)
             assertEquals(0, vm.uiState.value.totalPendientes)
-            assertEquals("10:30:00", vm.uiState.value.ultimaSincronizacion)
+            assertEquals("Actualizado hace unos momentos", vm.uiState.value.ultimaSincronizacion)
             assertEquals(101L, (vm.uiState.value.fase as FaseInventario.ConProductos).productos.single().id)
+
+            // Verificación de cálculo de lenguaje natural para diferentes antigüedades
+            assertEquals("Nunca se ha sincronizado", vm.calcularAntiguedad(null, fakeHora.millis))
+            assertEquals("Actualizado hace 2 horas", vm.calcularAntiguedad(fakeHora.millis - 2 * 3600 * 1000L, fakeHora.millis))
+            assertEquals("Actualizado hace más de un día", vm.calcularAntiguedad(fakeHora.millis - 25 * 3600 * 1000L, fakeHora.millis))
         } finally {
             Dispatchers.resetMain()
         }

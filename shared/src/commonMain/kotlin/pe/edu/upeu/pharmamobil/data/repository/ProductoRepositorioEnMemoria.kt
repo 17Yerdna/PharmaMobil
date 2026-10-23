@@ -26,6 +26,7 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
     override fun observar() = productosObservables.asStateFlow()
     override suspend fun sincronizar(): Result<Unit> = Result.success(Unit)
     override fun obtenerUltimaHoraSincronizada(): String? = null
+    override fun obtenerUltimoSyncTimestamp(): Long? = null
 
     override suspend fun listar(): List<Producto> {
         delay(100)

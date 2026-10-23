@@ -40,6 +40,11 @@ class ProductoRepositorioOffline(
     override fun obtenerUltimaHoraSincronizada(): String? = ultimaHoraSincronizada
 
     /**
+     * Retorna el instante en milisegundos de la última sincronización correcta persistida en SQLite.
+     */
+    override fun obtenerUltimoSyncTimestamp(): Long? = local.obtenerUltimoSyncTimestamp()
+
+    /**
      * Ejecuta el ciclo de sincronización bidireccional con el servidor protegido por [Mutex]:
      * 1. Sube todos los productos pendientes (IDs negativos) mediante POST.
      * 2. Reemplaza atómicamente cada ID negativo por la respuesta positiva del servidor.
@@ -65,7 +70,9 @@ class ProductoRepositorioOffline(
             val remotos = resultadoListar.getOrThrow()
             local.guardarRemotos(remotos)
 
-            // 3. Registrar timestamp
+            // 3. SOLO TRAS ÉXITO TOTAL DE 1 Y 2: Registrar timestamp persistente en SQLite
+            val ahora = proveedorHora.ahoraMillis()
+            local.guardarTimestampSincronizacion(ahora)
             ultimaHoraSincronizada = proveedorHora.obtenerHoraActualFormateada()
         }
     }

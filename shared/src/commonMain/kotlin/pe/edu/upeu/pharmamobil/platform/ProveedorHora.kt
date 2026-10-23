@@ -5,5 +5,6 @@ package pe.edu.upeu.pharmamobil.platform
  * Utilizado para registrar la frescura temporal de sincronizaciones offline.
  */
 interface ProveedorHora {
+    fun ahoraMillis(): Long
     fun obtenerHoraActualFormateada(): String
 }

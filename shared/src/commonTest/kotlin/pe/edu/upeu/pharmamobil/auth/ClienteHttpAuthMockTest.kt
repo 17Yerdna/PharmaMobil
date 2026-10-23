@@ -35,9 +35,19 @@ import kotlin.test.assertTrue
 class ClienteHttpAuthMockTest {
 
     private class FakeAlmacenSeguro(private var tokenMemoria: String? = null) : AlmacenSeguro {
+        private var identidadMemoria: Triple<String, String, Set<String>>? = null
+
         override fun guardarToken(token: String) { tokenMemoria = token }
         override fun leerToken(): String? = tokenMemoria
         override fun borrarToken() { tokenMemoria = null }
+
+        override fun guardarIdentidad(usuario: String, nombreCompleto: String, permisos: Set<String>) {
+            identidadMemoria = Triple(usuario, nombreCompleto, permisos)
+        }
+        override fun leerIdentidad(): Triple<String, String, Set<String>>? = identidadMemoria
+        override fun borrarIdentidad() {
+            identidadMemoria = null
+        }
     }
 
     private val configTest = PlatformConfig(

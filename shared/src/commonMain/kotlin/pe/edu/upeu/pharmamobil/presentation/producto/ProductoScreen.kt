@@ -71,7 +71,7 @@ fun ProductoScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = if (uiState.ultimaSincronizacion != null) "Sincronizado: ${uiState.ultimaSincronizacion}" else "Persistencia SQLite Offline-First",
+                    text = uiState.ultimaSincronizacion ?: "Nunca se ha sincronizado",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

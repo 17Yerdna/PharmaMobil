@@ -72,6 +72,7 @@ class AuthRepositorioRest(
             throw c
         } catch (e: ClientRequestException) {
             almacen.borrarToken()
+            almacen.borrarIdentidad()
             cliente.limpiarTokenAuth()
             if (e.response.status == HttpStatusCode.Unauthorized) {
                 throw ErrorSesionException(ErrorSesion.SesionExpirada)
@@ -82,26 +83,32 @@ class AuthRepositorioRest(
             }
         } catch (e: ServerResponseException) {
             almacen.borrarToken()
+            almacen.borrarIdentidad()
             cliente.limpiarTokenAuth()
             throw ErrorSesionException(ErrorSesion.ErrorDesconocido("Error interno del servidor al consultar perfil"))
         } catch (e: HttpRequestTimeoutException) {
             almacen.borrarToken()
+            almacen.borrarIdentidad()
             cliente.limpiarTokenAuth()
             throw ErrorSesionException(ErrorSesion.SinConexion)
         } catch (e: ConnectTimeoutException) {
             almacen.borrarToken()
+            almacen.borrarIdentidad()
             cliente.limpiarTokenAuth()
             throw ErrorSesionException(ErrorSesion.SinConexion)
         } catch (e: IOException) {
             almacen.borrarToken()
+            almacen.borrarIdentidad()
             cliente.limpiarTokenAuth()
             throw ErrorSesionException(ErrorSesion.SinConexion)
         } catch (e: SerializationException) {
             almacen.borrarToken()
+            almacen.borrarIdentidad()
             cliente.limpiarTokenAuth()
             throw ErrorSesionException(ErrorSesion.ErrorDesconocido("Error de serialización al procesar perfil"))
         } catch (e: Exception) {
             almacen.borrarToken()
+            almacen.borrarIdentidad()
             cliente.limpiarTokenAuth()
             throw ErrorSesionException(ErrorSesion.ErrorDesconocido(e.message ?: "Error desconocido al procesar perfil"))
         }
@@ -113,11 +120,15 @@ class AuthRepositorioRest(
             loginResponse.permisos.toSet()
         }
 
+        // Cachear identidad para restauración offline
+        almacen.guardarIdentidad(meResponse.username, nombreFinal, permisosFinales)
+
         return Sesion(
             token = loginResponse.token,
             usuario = meResponse.username,
             nombreCompleto = nombreFinal,
-            permisos = permisosFinales
+            permisos = permisosFinales,
+            esOffline = false
         )
     }
 
@@ -126,35 +137,96 @@ class AuthRepositorioRest(
         return try {
             val me: UsuarioResponseDto = cliente.get("auth/me").body()
             val nombreFinal = me.empleadoNombre ?: me.username
+            val permisosFinales = me.permisos.toSet()
+            almacen.guardarIdentidad(me.username, nombreFinal, permisosFinales)
             Sesion(
                 token = token,
                 usuario = me.username,
                 nombreCompleto = nombreFinal,
-                permisos = me.permisos.toSet()
+                permisos = permisosFinales,
+                esOffline = false
             )
         } catch (c: CancellationException) {
             throw c
         } catch (e: ClientRequestException) {
             if (e.response.status == HttpStatusCode.Unauthorized || e.response.status == HttpStatusCode.Forbidden) {
                 almacen.borrarToken()
+                almacen.borrarIdentidad()
                 cliente.limpiarTokenAuth()
             }
             null
         } catch (e: HttpRequestTimeoutException) {
-            null
+            resolverSesionOffline(token)
         } catch (e: ConnectTimeoutException) {
-            null
+            resolverSesionOffline(token)
         } catch (e: IOException) {
-            null
+            resolverSesionOffline(token)
         } catch (e: ServerResponseException) {
-            null
+            resolverSesionOffline(token)
         } catch (e: Exception) {
             null
         }
     }
 
+    override suspend fun revalidarSesion(): Sesion {
+        val token = almacen.leerToken() ?: throw ErrorSesionException(ErrorSesion.SesionExpirada)
+        val me: UsuarioResponseDto = try {
+            cliente.get("auth/me").body()
+        } catch (c: CancellationException) {
+            throw c
+        } catch (e: ClientRequestException) {
+            if (e.response.status == HttpStatusCode.Unauthorized) {
+                almacen.borrarToken()
+                almacen.borrarIdentidad()
+                cliente.limpiarTokenAuth()
+                throw ErrorSesionException(ErrorSesion.SesionExpirada)
+            } else if (e.response.status == HttpStatusCode.Forbidden) {
+                almacen.borrarToken()
+                almacen.borrarIdentidad()
+                cliente.limpiarTokenAuth()
+                throw ErrorSesionException(ErrorSesion.SinPermiso)
+            } else {
+                throw ErrorSesionException(ErrorSesion.ErrorDesconocido("Error HTTP ${e.response.status.value}"))
+            }
+        } catch (e: ServerResponseException) {
+            throw ErrorSesionException(ErrorSesion.ErrorDesconocido("Error interno del servidor"))
+        } catch (e: HttpRequestTimeoutException) {
+            throw ErrorSesionException(ErrorSesion.SinConexion)
+        } catch (e: ConnectTimeoutException) {
+            throw ErrorSesionException(ErrorSesion.SinConexion)
+        } catch (e: IOException) {
+            throw ErrorSesionException(ErrorSesion.SinConexion)
+        } catch (e: Exception) {
+            throw ErrorSesionException(ErrorSesion.ErrorDesconocido(e.message ?: "Error al revalidar sesión"))
+        }
+
+        val nombreFinal = me.empleadoNombre ?: me.username
+        val permisosFinales = me.permisos.toSet()
+        almacen.guardarIdentidad(me.username, nombreFinal, permisosFinales)
+
+        return Sesion(
+            token = token,
+            usuario = me.username,
+            nombreCompleto = nombreFinal,
+            permisos = permisosFinales,
+            esOffline = false
+        )
+    }
+
     override suspend fun cerrarSesion() {
         almacen.borrarToken()
+        almacen.borrarIdentidad()
         cliente.limpiarTokenAuth()
+    }
+
+    private fun resolverSesionOffline(token: String): Sesion? {
+        val identidad = almacen.leerIdentidad() ?: return null
+        return Sesion(
+            token = token,
+            usuario = identidad.first,
+            nombreCompleto = identidad.second,
+            permisos = emptySet(),
+            esOffline = true
+        )
     }
 }

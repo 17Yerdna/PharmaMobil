@@ -79,7 +79,11 @@ class SesionViewModel(
             _uiState.update { it.copy(cargando = true) }
             val sesion = sesionGuardadaUseCase()
             if (sesion != null) {
-                sessionCoordinator.notificarSesionIniciada(sesion)
+                if (sesion.esOffline) {
+                    sessionCoordinator.notificarSesionOffline(sesion)
+                } else {
+                    sessionCoordinator.notificarSesionIniciada(sesion)
+                }
             } else {
                 if (sessionCoordinator.estadoSesion.value !is SesionEstado.Expirado) {
                     sessionCoordinator.notificarSesionCerrada()

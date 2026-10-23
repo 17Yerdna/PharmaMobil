@@ -12,4 +12,6 @@ class SincronizarProductosUseCase(
     suspend operator fun invoke(): Result<Unit> = repositorio.sincronizar()
 
     fun obtenerUltimaHoraSincronizada(): String? = repositorio.obtenerUltimaHoraSincronizada()
+
+    fun obtenerUltimoSyncTimestamp(): Long? = repositorio.obtenerUltimoSyncTimestamp()
 }

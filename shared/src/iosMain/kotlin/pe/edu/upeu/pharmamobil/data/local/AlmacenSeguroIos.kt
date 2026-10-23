@@ -14,6 +14,7 @@ package pe.edu.upeu.pharmamobil.data.local
  */
 class AlmacenSeguroIos : AlmacenSeguro {
     private var tokenMemoria: String? = null
+    private var identidadMemoria: Triple<String, String, Set<String>>? = null
 
     override fun guardarToken(token: String) {
         tokenMemoria = token
@@ -23,5 +24,15 @@ class AlmacenSeguroIos : AlmacenSeguro {
 
     override fun borrarToken() {
         tokenMemoria = null
+    }
+
+    override fun guardarIdentidad(usuario: String, nombreCompleto: String, permisos: Set<String>) {
+        identidadMemoria = Triple(usuario, nombreCompleto, permisos)
+    }
+
+    override fun leerIdentidad(): Triple<String, String, Set<String>>? = identidadMemoria
+
+    override fun borrarIdentidad() {
+        identidadMemoria = null
     }
 }
